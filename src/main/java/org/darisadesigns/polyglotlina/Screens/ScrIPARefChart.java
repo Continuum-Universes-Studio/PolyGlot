@@ -159,14 +159,14 @@ public final class ScrIPARefChart extends PFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("IPA Pronunciation/Character Guide");
-        setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
         setMinimumSize(new java.awt.Dimension(828, 589));
 
-        jTabbedPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jTabbedPane1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jTabbedPane1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jTabbedPane1.setMaximumSize(new java.awt.Dimension(301, 455));
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel1.setMaximumSize(new java.awt.Dimension(301, 455));
 
         lblVowels.setIcon(new javax.swing.ImageIcon(getClass().getResource(PGTUtil.IPA_VOWEL_IMAGE)));
@@ -197,7 +197,7 @@ public final class ScrIPARefChart extends PFrame {
 
         jTabbedPane1.addTab("Vowels", jPanel1);
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         lblPulmonicConsonants.setIcon(new javax.swing.ImageIcon(getClass().getResource(PGTUtil.IPA_PULMONIC_CONSONANT_IMAGE)));
         lblPulmonicConsonants.setToolTipText("");
@@ -226,7 +226,7 @@ public final class ScrIPARefChart extends PFrame {
 
         jTabbedPane1.addTab("Pulmonic consonants", jPanel2);
 
-        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel3.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         lblNonPulmonicConsonants.setIcon(new javax.swing.ImageIcon(getClass().getResource(PGTUtil.IPA_NON_PULMONIC_CONSONANTS_IMAGE)));
         lblNonPulmonicConsonants.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -254,7 +254,7 @@ public final class ScrIPARefChart extends PFrame {
 
         jTabbedPane1.addTab("Non-pulmonic consonants", jPanel3);
 
-        jPanel4.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel4.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         lblOtherSymbols.setIcon(new javax.swing.ImageIcon(getClass().getResource(PGTUtil.IPA_OTHER_IMAGE)));
         lblOtherSymbols.addMouseListener(new java.awt.event.MouseAdapter() {

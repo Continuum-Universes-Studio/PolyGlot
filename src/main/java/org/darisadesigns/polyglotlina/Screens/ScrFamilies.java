@@ -451,8 +451,12 @@ public final class ScrFamilies extends PFrame {
         treFam.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
         jScrollPane1.setViewportView(treFam);
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(
+        javax.swing.UIManager.getColor("Separator.foreground") != null
+                ? javax.swing.UIManager.getColor("Separator.foreground")
+                : javax.swing.UIManager.getColor("Label.foreground")
+));
 
         chkInclSubFam.setText("Include Subfamilies");
         chkInclSubFam.setToolTipText("Include all words from subfamilies in list disables remove (-) button");

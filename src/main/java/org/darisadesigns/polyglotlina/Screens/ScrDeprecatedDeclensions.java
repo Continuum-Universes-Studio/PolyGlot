@@ -104,7 +104,7 @@ public final class ScrDeprecatedDeclensions extends PDialog {
             }
         });
 
-        pnlDeclensions.setBackground(new java.awt.Color(255, 255, 255));
+        pnlDeclensions.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         javax.swing.GroupLayout pnlDeclensionsLayout = new javax.swing.GroupLayout(pnlDeclensions);
         pnlDeclensions.setLayout(pnlDeclensionsLayout);

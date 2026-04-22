@@ -907,16 +907,16 @@ public final class ScrGrammarGuide extends PFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Grammar Guide");
 
-        jSplitPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jSplitPane1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jSplitPane1.setDividerLocation(220);
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel2.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
         txtName.setToolTipText("Name of chapter/section");
         txtName.setEnabled(false);
 
-        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel3.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel3.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         jToolBar1.setRollover(true);
@@ -973,7 +973,7 @@ public final class ScrGrammarGuide extends PFrame {
                 .addComponent(panSection, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE))
         );
 
-        jPanel4.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel4.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel4.setMaximumSize(new java.awt.Dimension(32767, 76));
         jPanel4.setMinimumSize(new java.awt.Dimension(100, 76));
 
@@ -1122,7 +1122,7 @@ public final class ScrGrammarGuide extends PFrame {
 
         jSplitPane1.setRightComponent(jPanel2);
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("JTree");
         treChapList.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));

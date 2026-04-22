@@ -344,6 +344,7 @@ public final class ScrTypes extends PFrame {
         chkProcMand.setEnabled(enable);
         btnSetup.setEnabled(enable);
         btnAutogen.setEnabled(enable);
+        btnMorphology.setEnabled(enable);
     }
 
     public static ScrTypes run(DictCore _core) {
@@ -417,6 +418,7 @@ public final class ScrTypes extends PFrame {
             "Enforced Pattern");
         btnSetup = new PButton(nightMode);
         btnAutogen = new PButton(nightMode);
+        btnMorphology = new PButton(nightMode);
         txtErrorBox = new javax.swing.JTextField();
         jPanel3 = new javax.swing.JPanel();
         chkDefMand = new PCheckBox(nightMode);
@@ -432,14 +434,14 @@ public final class ScrTypes extends PFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Parts of Speech");
-        setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
-        jSplitPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jSplitPane1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jSplitPane1.setDividerLocation(140);
         jSplitPane1.setForeground(new java.awt.Color(255, 255, 255));
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         txtName.setToolTipText("Part of speech name");
 
@@ -463,10 +465,19 @@ public final class ScrTypes extends PFrame {
             }
         });
 
+        btnMorphology.setText("Morphology Rules");
+        btnMorphology.setToolTipText("Setup ordered morphology rules and conditions for this part of speech.");
+        btnMorphology.setEnabled(false);
+        btnMorphology.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnMorphologyActionPerformed(evt);
+            }
+        });
+
         txtErrorBox.setForeground(new java.awt.Color(255, 0, 0));
         txtErrorBox.setEnabled(false);
 
-        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel3.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel3.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         chkDefMand.setText("Definition Mandatory");
@@ -507,6 +518,7 @@ public final class ScrTypes extends PFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnAutogen, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE)
+                    .addComponent(btnMorphology, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE)
                     .addComponent(btnSetup, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(txtTypePattern, javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(txtGloss, javax.swing.GroupLayout.Alignment.LEADING)
@@ -530,6 +542,8 @@ public final class ScrTypes extends PFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnAutogen)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnMorphology)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtErrorBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -537,7 +551,7 @@ public final class ScrTypes extends PFrame {
 
         jSplitPane1.setRightComponent(jPanel1);
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         lstTypes.setToolTipText("Parts of Speech");
         lstTypes.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
@@ -679,10 +693,21 @@ public final class ScrTypes extends PFrame {
                 });
     }//GEN-LAST:event_btnAutogenActionPerformed
 
+    private void btnMorphologyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMorphologyActionPerformed
+        TypeNode curNode = lstTypes.getSelectedValue();
+        if (curNode == null) {
+            return;
+        }
+
+        Window window = ScrMorphologySetup.run(core, curNode.getId());
+        childFrames.add(window);
+    }//GEN-LAST:event_btnMorphologyActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAddType;
     private javax.swing.JButton btnAutogen;
     private javax.swing.JButton btnDelType;
+    private javax.swing.JButton btnMorphology;
     private javax.swing.JButton btnSetup;
     private javax.swing.JCheckBox chkDefMand;
     private javax.swing.JCheckBox chkProcMand;

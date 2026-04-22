@@ -1102,12 +1102,12 @@ public class ScrLogoDetails extends PFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Logograph Details");
-        setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
-        jLayeredPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jLayeredPane1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jLayeredPane1.setPreferredSize(new java.awt.Dimension(1, 1));
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -1136,7 +1136,7 @@ public class ScrLogoDetails extends PFrame {
         });
         jScrollPane1.setViewportView(lstLogos);
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         lblLogo.setText("jLabel6");

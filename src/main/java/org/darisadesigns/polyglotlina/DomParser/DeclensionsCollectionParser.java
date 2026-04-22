@@ -43,6 +43,9 @@ public class DeclensionsCollectionParser extends BaseParser {
             case PGTUtil.DEC_GEN_RULE_XID -> {
                 new DeclensionGenRuleParser(parseIssues).parse(node, core);
             }
+            case PGTUtil.MORPH_RULE_XID -> {
+                new MorphologyRuleParser(parseIssues).parse(node, core);
+            }
             default ->
                 throw new PDomException("Unexpected node in " + this.getClass().getName() + " : " + node.getNodeName());
         }

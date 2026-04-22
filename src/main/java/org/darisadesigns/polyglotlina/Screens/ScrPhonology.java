@@ -28,6 +28,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.swing.DefaultListModel;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
@@ -37,6 +38,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+
+import org.darisadesigns.polyglotlina.DictCore;
+import org.darisadesigns.polyglotlina.Desktop.DesktopPropertiesManager;
+import org.darisadesigns.polyglotlina.Desktop.PGTUtil;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.DesktopInfoBox;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PAddRemoveButton;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PButton;
@@ -47,9 +52,6 @@ import org.darisadesigns.polyglotlina.Desktop.CustomControls.PFrame;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PLabel;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PTextField;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PTextPaneDisplay;
-import org.darisadesigns.polyglotlina.Desktop.DesktopPropertiesManager;
-import org.darisadesigns.polyglotlina.Desktop.PGTUtil;
-import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.ManagersCollections.PronunciationMgr;
 import org.darisadesigns.polyglotlina.Nodes.PronunciationNode;
 
@@ -76,7 +78,30 @@ public final class ScrPhonology extends PFrame {
         procMan = _core.getPronunciationMgr();
         initComponents();
         updateAllValues(_core);
-        getRootPane().setBackground(Color.white);
+        getRootPane().setBackground(javax.swing.UIManager.getColor("Panel.background"));
+getContentPane().setBackground(javax.swing.UIManager.getColor("Panel.background"));
+        java.awt.Color panelBg = javax.swing.UIManager.getColor("Panel.background");
+        java.awt.Color panelFg = javax.swing.UIManager.getColor("Label.foreground");
+        java.awt.Color listBg = javax.swing.UIManager.getColor("List.background");
+        java.awt.Color listFg = javax.swing.UIManager.getColor("List.foreground");
+        java.awt.Color textBg = javax.swing.UIManager.getColor("TextArea.background");
+        java.awt.Color textFg = javax.swing.UIManager.getColor("TextArea.foreground");
+
+        if (panelBg != null) {
+            pnlCompositionTab.setBackground(panelBg);
+            jScrollPane4.setBackground(panelBg);
+            jScrollPane4.getViewport().setBackground(listBg != null ? listBg : panelBg);
+        }
+
+        if (panelFg != null) {
+            jLabel4.setForeground(panelFg);
+            chkCompositionalSyllables.setForeground(panelFg);
+        }
+
+        lstSyllables.setBackground(listBg != null ? listBg : panelBg);
+        lstSyllables.setForeground(listFg != null ? listFg : panelFg);
+        lstSyllables.setSelectionBackground(javax.swing.UIManager.getColor("List.selectionBackground"));
+        lstSyllables.setSelectionForeground(javax.swing.UIManager.getColor("List.selectionForeground"));
         chkEnableRom.setSelected(core.getRomManager().isEnabled());
         enableRomanization(chkEnableRom.isSelected());
         setupButtons();
@@ -805,15 +830,20 @@ public final class ScrPhonology extends PFrame {
         jScrollPane4 = new javax.swing.JScrollPane();
         lstSyllables = new javax.swing.JList<>();
         jLabel4 = new PLabel();
-        chkCompositionalSyllables = new PCheckBox();
+        chkCompositionalSyllables = new PCheckBox(nightMode);
+        
+        java.awt.Color labelFg = javax.swing.UIManager.getColor("Label.foreground");
+        if (labelFg != null) {
+            chkCompositionalSyllables.setForeground(labelFg);
+        }
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Phonology & Text");
-        setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         jTabbedPane1.setToolTipText("Character clusters which may not appear in words");
 
-        pnlRomanization.setBackground(new java.awt.Color(255, 255, 255));
+        pnlRomanization.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlRomanization.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         pnlRomanization.setMinimumSize(new java.awt.Dimension(10, 10));
 
@@ -940,7 +970,7 @@ public final class ScrPhonology extends PFrame {
                     .addComponent(btnDelRom, javax.swing.GroupLayout.Alignment.TRAILING)))
         );
 
-        pnlOrthography.setBackground(new java.awt.Color(255, 255, 255));
+        pnlOrthography.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlOrthography.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         pnlOrthography.setMinimumSize(new java.awt.Dimension(10, 10));
 
@@ -1046,7 +1076,7 @@ public final class ScrPhonology extends PFrame {
                     .addComponent(btnDelProc, javax.swing.GroupLayout.Alignment.TRAILING)))
         );
 
-        pnlCharacterReplacement.setBackground(new java.awt.Color(255, 255, 255));
+        pnlCharacterReplacement.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlCharacterReplacement.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -1171,7 +1201,11 @@ public final class ScrPhonology extends PFrame {
             }
         });
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(
+            javax.swing.UIManager.getColor("Separator.foreground") != null
+                ? javax.swing.UIManager.getColor("Separator.foreground")
+                : javax.swing.UIManager.getColor("Label.foreground")
+        ));
         jPanel2.setToolTipText("Diplays legality of test strings.");
 
         txtIllegalClustersTest.setToolTipText("Test strings of characters for legality here");

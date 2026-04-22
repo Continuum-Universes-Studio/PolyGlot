@@ -100,7 +100,7 @@ public final class PTextField extends JTextField implements CoreUpdateSubscripti
             setBackground(VisualStyleManager.getTextBGColor(nightMode));
         } else {
             setForeground(VisualStyleManager.getDisabledTextColor(nightMode));
-            setBackground(Color.black);
+            setBackground(VisualStyleManager.getDisabledTextColorBG(nightMode));
         }
         
         this.putClientProperty("Nimbus.Overrides", PolyGlot.getPolyGlot().getUiDefaults());
@@ -208,7 +208,8 @@ public final class PTextField extends JTextField implements CoreUpdateSubscripti
         if (getText().isEmpty() && (!isFocusOwner() || !isEditable())) {
             var fontMetrics = g2.getFontMetrics();
             var displayDefText = "-- " + defText + " --";
-            g2.setColor(PGTUtil.COLOR_DEFAULT_TEXT);
+            g2.setColor(VisualStyleManager.getDefaultTextColor(
+                    PolyGlot.getPolyGlot().getOptionsManager().isNightMode()));
             g2.setFont(PGTUtil.MENU_FONT);
             var xPosition = (getWidth()/2) - (fontMetrics.stringWidth(displayDefText)/2);
             g2.drawString(displayDefText, xPosition, fontMetrics.getHeight());

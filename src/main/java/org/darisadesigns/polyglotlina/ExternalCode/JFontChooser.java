@@ -4,6 +4,8 @@
 package org.darisadesigns.polyglotlina.ExternalCode;
 
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PButton;
+import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
 import org.darisadesigns.polyglotlina.DictCore;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -129,15 +131,18 @@ public class JFontChooser extends JComponent
         }
         this.fontSizeStrings = fontSizeStrings;
 
+        boolean nightMode = PolyGlot.getPolyGlot().getOptionsManager().isNightMode();
+        Color bgColor = VisualStyleManager.getPanelBGColor(nightMode);
+
         JPanel selectPanel = new JPanel();
-        selectPanel.setBackground(Color.white);
+        selectPanel.setBackground(bgColor);
         selectPanel.setLayout(new BoxLayout(selectPanel, BoxLayout.X_AXIS));
         selectPanel.add(getFontFamilyPanel());
         selectPanel.add(getFontStylePanel());
         selectPanel.add(getFontSizePanel());
 
         JPanel contentsPanel = new JPanel();
-        contentsPanel.setBackground(Color.white);
+        contentsPanel.setBackground(bgColor);
         contentsPanel.setLayout(new GridLayout(2, 1));
         contentsPanel.add(selectPanel, BorderLayout.NORTH);
         contentsPanel.add(getSamplePanel(), BorderLayout.CENTER);
@@ -663,7 +668,10 @@ public class JFontChooser extends JComponent
             : (Frame) SwingUtilities.getAncestorOfClass(Frame.class, parent);
         JDialog dialog = new JDialog(frame, ("Select Font"), true);
 
-        frame.setBackground(Color.white);
+        Color bgColor = VisualStyleManager.getPanelBGColor(nightMode);
+        Color controlBgColor = VisualStyleManager.getControlBGColor(nightMode);
+
+        frame.setBackground(bgColor);
         Action okAction = new DialogOKAction(dialog);
         Action cancelAction = new DialogCancelAction(dialog);
 
@@ -675,7 +683,7 @@ public class JFontChooser extends JComponent
         cancelButton.setFont(DEFAULT_FONT);
 
         JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setBackground(Color.white);
+        buttonsPanel.setBackground(controlBgColor);
         buttonsPanel.setLayout(new GridLayout(2, 1));
         buttonsPanel.add(okButton);
         buttonsPanel.add(cancelButton);
@@ -689,7 +697,7 @@ public class JFontChooser extends JComponent
         inputMap.put(KeyStroke.getKeyStroke("ENTER"), okAction.getValue(Action.DEFAULT));
 
         JPanel dialogEastPanel = new JPanel();
-        dialogEastPanel.setBackground(Color.white);
+        dialogEastPanel.setBackground(controlBgColor);
         dialogEastPanel.setLayout(new BorderLayout());
         dialogEastPanel.add(buttonsPanel, BorderLayout.NORTH);
 
@@ -697,7 +705,7 @@ public class JFontChooser extends JComponent
         dialog.getContentPane().add(dialogEastPanel, BorderLayout.EAST);
         dialog.pack();
         dialog.setLocationRelativeTo(frame);
-        dialog.getRootPane().setBackground(Color.white);
+        dialog.getRootPane().setBackground(bgColor);
         return dialog;
     }
 
@@ -711,19 +719,22 @@ public class JFontChooser extends JComponent
     {
         if (fontNamePanel == null)
         {
+            boolean nightMode = PolyGlot.getPolyGlot().getOptionsManager().isNightMode();
+            Color bgColor = VisualStyleManager.getPanelBGColor(nightMode);
+
             fontNamePanel = new JPanel();
-            fontNamePanel.setBackground(Color.white);
+            fontNamePanel.setBackground(bgColor);
             fontNamePanel.setLayout(new BorderLayout());
             fontNamePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             fontNamePanel.setPreferredSize(new Dimension(180, 130));
 
             JScrollPane scrollPane = new JScrollPane(getFontFamilyList());
-            scrollPane.setBackground(Color.white);
+            scrollPane.setBackground(bgColor);
             scrollPane.getVerticalScrollBar().setFocusable(false);
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
             JPanel p = new JPanel();
-            p.setBackground(Color.white);
+            p.setBackground(bgColor);
             p.setLayout(new BorderLayout());
             p.add(getFontFamilyTextField(), BorderLayout.NORTH);
             p.add(scrollPane, BorderLayout.CENTER);
@@ -746,19 +757,22 @@ public class JFontChooser extends JComponent
     {
         if (fontStylePanel == null)
         {
+            boolean nightMode = PolyGlot.getPolyGlot().getOptionsManager().isNightMode();
+            Color bgColor = VisualStyleManager.getPanelBGColor(nightMode);
+
             fontStylePanel = new JPanel();
-            fontStylePanel.setBackground(Color.white);
+            fontStylePanel.setBackground(bgColor);
             fontStylePanel.setLayout(new BorderLayout());
             fontStylePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             fontStylePanel.setPreferredSize(new Dimension(140, 130));
 
             JScrollPane scrollPane = new JScrollPane(getFontStyleList());
-            scrollPane.setBackground(Color.white);
+            scrollPane.setBackground(bgColor);
             scrollPane.getVerticalScrollBar().setFocusable(false);
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
             JPanel p = new JPanel();
-            p.setBackground(Color.white);
+            p.setBackground(bgColor);
             p.setLayout(new BorderLayout());
             p.add(getFontStyleTextField(), BorderLayout.NORTH);
             p.add(scrollPane, BorderLayout.CENTER);
@@ -780,19 +794,22 @@ public class JFontChooser extends JComponent
     {
         if (fontSizePanel == null)
         {
+            boolean nightMode = PolyGlot.getPolyGlot().getOptionsManager().isNightMode();
+            Color bgColor = VisualStyleManager.getPanelBGColor(nightMode);
+
             fontSizePanel = new JPanel();
-            fontSizePanel.setBackground(Color.white);
+            fontSizePanel.setBackground(bgColor);
             fontSizePanel.setLayout(new BorderLayout());
             fontSizePanel.setPreferredSize(new Dimension(70, 130));
             fontSizePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
             JScrollPane scrollPane = new JScrollPane(getFontSizeList());
-            scrollPane.setBackground(Color.white);
+            scrollPane.setBackground(bgColor);
             scrollPane.getVerticalScrollBar().setFocusable(false);
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
             JPanel p = new JPanel();
-            p.setBackground(Color.white);
+            p.setBackground(bgColor);
             p.setLayout(new BorderLayout());
             p.add(getFontSizeTextField(), BorderLayout.NORTH);
             p.add(scrollPane, BorderLayout.CENTER);
@@ -814,6 +831,9 @@ public class JFontChooser extends JComponent
     {
         if (samplePanel == null)
         {
+            boolean nightMode = PolyGlot.getPolyGlot().getOptionsManager().isNightMode();
+            Color bgColor = VisualStyleManager.getPanelBGColor(nightMode);
+
             Border titledBorder = BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(), ("Sample"), 0, 0, 
                 ((DesktopPropertiesManager)core.getPropertiesManager()).getFontMenu());
@@ -821,7 +841,7 @@ public class JFontChooser extends JComponent
             Border border = BorderFactory.createCompoundBorder(titledBorder, empty);
 
             samplePanel = new JPanel();
-            samplePanel.setBackground(Color.white);
+            samplePanel.setBackground(bgColor);
             samplePanel.setLayout(new BorderLayout());
             samplePanel.setBorder(border);
 

@@ -21,6 +21,7 @@ package org.darisadesigns.polyglotlina.Desktop.CustomControls;
 
 import org.darisadesigns.polyglotlina.CustomControls.GrammarSectionNode;
 import org.darisadesigns.polyglotlina.CustomControls.GrammarChapNode;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
 import org.darisadesigns.polyglotlina.PGTUtil;
 import java.awt.Component;
 import javax.swing.Icon;
@@ -35,11 +36,21 @@ import javax.swing.tree.DefaultTreeCellRenderer;
  * @author draque
  */
 public class PGTreeCellRenderer extends DefaultTreeCellRenderer {
+    private final boolean nightMode;
+
+    public PGTreeCellRenderer(boolean _nightMode) {
+        nightMode = _nightMode;
+    }
 
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean _selected, boolean expanded, boolean leaf, int row, boolean _hasFocus) {
+        super.getTreeCellRendererComponent(tree, value, _selected, expanded, leaf, row, _hasFocus);
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
         setText(value.toString());
+        setBackgroundNonSelectionColor(VisualStyleManager.getPanelBGColor(nightMode));
+        setTextNonSelectionColor(VisualStyleManager.getTextColor(nightMode));
+        setBackgroundSelectionColor(VisualStyleManager.getSelectionBGColor(nightMode));
+        setTextSelectionColor(VisualStyleManager.getSelectionFGColor(nightMode));
 
         if (node instanceof GrammarChapNode
                 && expanded) {

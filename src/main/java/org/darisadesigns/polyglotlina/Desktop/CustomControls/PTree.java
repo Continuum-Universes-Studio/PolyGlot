@@ -21,14 +21,17 @@ package org.darisadesigns.polyglotlina.Desktop.CustomControls;
 
 import java.awt.Font;
 import javax.swing.JTree;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
 
 /**
  *
  * @author draque.thompson
  */
 public class PTree extends JTree {
-    public PTree(Font menuFont, boolean nightMode) { // nightmode included for future expansion
+    public PTree(Font menuFont, boolean nightMode) {
         super.setFont(menuFont);
-        super.setCellRenderer(new PGTreeCellRenderer());
+        super.setBackground(VisualStyleManager.getPanelBGColor(nightMode));
+        super.setForeground(VisualStyleManager.getTextColor(nightMode));
+        super.setCellRenderer(new PGTreeCellRenderer(nightMode));
     }
 }

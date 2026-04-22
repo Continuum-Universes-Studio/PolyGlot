@@ -57,13 +57,16 @@ public class PCheckBox extends JCheckBox implements MouseListener {
     @Override
     public void paint(Graphics g) {
         boolean enabled = this.isEnabled();
-        
+
         Color selected = VisualStyleManager.getCheckBoxSelected(enabled, nightMode);
         Color backGround = VisualStyleManager.getCheckBoxBG(enabled, nightMode);
         Color outline = VisualStyleManager.getCheckBoxOutline(enabled, nightMode);
         Color hover = VisualStyleManager.getCheckBoxHover(enabled, nightMode);
         Color click = VisualStyleManager.getCheckBoxClicked(enabled, nightMode);
         Color fieldBack = VisualStyleManager.getCheckBoxFieldBack(enabled, nightMode);
+        Color textColor = enabled
+                ? VisualStyleManager.getTextColor(nightMode)
+                : VisualStyleManager.getDisabledTextColor(nightMode);
         int rounding = PGTUtil.CHECKBOX_ROUNDING;
         int thisHeight = this.getHeight();
         
@@ -99,7 +102,7 @@ public class PCheckBox extends JCheckBox implements MouseListener {
             g.fillRect(7, 7, thisHeight - 14, thisHeight - 14);
         }
         
-        g.setColor(outline);
+        g.setColor(textColor);
         char[] text = getText().toCharArray();
         FontMetrics fm = g.getFontMetrics(getFont());
         Rectangle2D rec = fm.getStringBounds(getText(), g);

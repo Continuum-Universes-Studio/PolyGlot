@@ -28,7 +28,9 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
 import org.darisadesigns.polyglotlina.Desktop.DesktopPropertiesManager;
+import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
 import org.darisadesigns.polyglotlina.Nodes.LexiconProblemNode;
@@ -75,14 +77,16 @@ public class PListCellRenderer extends DefaultListCellRenderer {
     
     @Override
     public void paint(Graphics g) {
+        boolean nightMode = PolyGlot.getPolyGlot() != null
+                && PolyGlot.getPolyGlot().getOptionsManager().isNightMode();
         ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                             RenderingHints.VALUE_ANTIALIAS_ON);
         
         if (curVal instanceof PrintOrderNode orderNode) {
             if (orderNode.isSelected()) {
-                this.setForeground(Color.black);
+                this.setForeground(VisualStyleManager.getTextColor(nightMode));
             } else {
-                this.setForeground(Color.gray);
+                this.setForeground(VisualStyleManager.getDisabledTextColor(nightMode));
             }
         } else if (curVal instanceof LexiconProblemNode problemNode) {
             if (!problemNode.useConFont) {
@@ -91,7 +95,7 @@ public class PListCellRenderer extends DefaultListCellRenderer {
             
             switch (problemNode.severity) {
                 case LexiconProblemNode.SEVARITY_INFO -> {
-                    this.setForeground(Color.black);
+                    this.setForeground(VisualStyleManager.getTextColor(nightMode));
                 }
                 case LexiconProblemNode.SEVARITY_WARNING -> {
                     this.setForeground(Color.orange);
@@ -121,9 +125,9 @@ public class PListCellRenderer extends DefaultListCellRenderer {
                 }
                 
                 g.setFont(localFont);
-                g.setColor(Color.blue);
+                g.setColor(VisualStyleManager.getListExtraTextColor(nightMode));
                 g.drawLine(wordEnd + 10, 5, wordEnd + 10, height);
-                g.setColor(Color.darkGray);
+                g.setColor(VisualStyleManager.getTextColor(nightMode));
                 g.drawString(printValue, wordEnd + 15, dropPosition);
             }
         }

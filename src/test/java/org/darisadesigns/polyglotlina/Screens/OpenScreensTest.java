@@ -130,6 +130,20 @@ public class OpenScreensTest {
         
         testExceptions(new Object() {}.getClass().getEnclosingMethod().getName());
     }
+
+    @Test
+    public void testScrMorphologySetup() {
+        System.out.println("OpenScreensTest.testScrMorphologySetup");
+
+        if (headless) {
+            return;
+        }
+
+        ScrMorphologySetup s = new ScrMorphologySetup(core, core.getTypes().getNodes()[0].getId());
+        s.dispose();
+
+        testExceptions(new Object() {}.getClass().getEnclosingMethod().getName());
+    }
     
     @Test
     public void testScrDeclensionGrids() {
@@ -171,6 +185,20 @@ public class OpenScreensTest {
         ScrEasterEgg s = new ScrEasterEgg();
         s.dispose();
         
+        testExceptions(new Object() {}.getClass().getEnclosingMethod().getName());
+    }
+
+    @Test
+    public void testScrEvolutionProfile() {
+        System.out.println("OpenScreensTest.testScrEvolutionProfile");
+
+        if (headless) {
+            return;
+        }
+
+        ScrEvolutionProfile s = new ScrEvolutionProfile(core);
+        s.dispose();
+
         testExceptions(new Object() {}.getClass().getEnclosingMethod().getName());
     }
     

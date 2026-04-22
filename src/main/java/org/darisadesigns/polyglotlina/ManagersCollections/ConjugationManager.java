@@ -19,6 +19,7 @@
  */
 package org.darisadesigns.polyglotlina.ManagersCollections;
 
+import org.darisadesigns.polyglotlina.MorphologyEngine;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
 import org.darisadesigns.polyglotlina.Nodes.ConjugationDimension;
 import org.darisadesigns.polyglotlina.DictCore;
@@ -26,6 +27,7 @@ import org.darisadesigns.polyglotlina.Nodes.ConjugationGenRule;
 import org.darisadesigns.polyglotlina.Nodes.ConjugationGenTransform;
 import org.darisadesigns.polyglotlina.Nodes.ConjugationNode;
 import org.darisadesigns.polyglotlina.Nodes.ConjugationPair;
+import org.darisadesigns.polyglotlina.Nodes.MorphologyRule;
 import org.darisadesigns.polyglotlina.PGTUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,14 +51,19 @@ import org.w3c.dom.Element;
  * @author draque
  */
 public class ConjugationManager {
+    public static final String MORPH_TARGET_LEMMA = "lemma";
+    public static final String MORPH_TARGET_STEM = "stem";
 
     private final DictCore core;
     private final List<String> decGenDebug = new ArrayList<>();
+    private final MorphologyEngine morphologyEngine = new MorphologyEngine();
     private Integer topId = 0;
+    private Integer topMorphologyRuleId = 0;
     private boolean bufferDecTemp = false;
     private Integer bufferRelId = -1;
     private ConjugationNode buffer = null;
     private final Map<Integer, List<ConjugationGenRule>> generationRules = new HashMap<>();
+    private final Map<Integer, List<MorphologyRule>> morphologyRules = new HashMap<>();
     private ConjugationGenRule ruleBuffer = new ConjugationGenRule();
     
     // Integer is ID of related word, list is list of declension nodes
@@ -72,6 +79,16 @@ public class ConjugationManager {
     public ConjugationManager(DictCore _core) {
         core = _core;
         buffer = new ConjugationNode(-1, this);
+    }
+
+    private static class LegacyGenerationResult {
+        private final String form;
+        private final boolean matchedTargetRule;
+
+        private LegacyGenerationResult(String form, boolean matchedTargetRule) {
+            this.form = form;
+            this.matchedTargetRule = matchedTargetRule;
+        }
     }
     
     /**
@@ -289,6 +306,187 @@ public class ConjugationManager {
         ruleBuffer = new ConjugationGenRule();
     }
 
+    public void addMorphologyRule(MorphologyRule newRule) {
+        int typeId = newRule.getTypeId();
+        List<MorphologyRule> rules = morphologyRules.computeIfAbsent(typeId, key -> new ArrayList<>());
+
+        if (newRule.getId() == -1) {
+            topMorphologyRuleId++;
+            newRule.setId(topMorphologyRuleId);
+        } else if (newRule.getId() > topMorphologyRuleId) {
+            topMorphologyRuleId = newRule.getId();
+        }
+
+        if (newRule.getOrder() == -1) {
+            MorphologyRule[] targetRules = getMorphologyRulesForTarget(typeId, newRule.getTargetKey());
+
+            if (targetRules.length == 0) {
+                newRule.setOrder(1);
+            } else {
+                newRule.setOrder(targetRules[targetRules.length - 1].getOrder() + 1);
+            }
+        }
+
+        rules.add(newRule);
+    }
+
+    public void wipeMorphologyRules(int typeId) {
+        morphologyRules.remove(typeId);
+    }
+
+    public void deleteMorphologyRule(MorphologyRule delRule) {
+        if (morphologyRules.containsKey(delRule.getTypeId())) {
+            morphologyRules.get(delRule.getTypeId()).remove(delRule);
+        }
+    }
+
+    public void deleteMorphologyRules(int typeId, String targetKey) {
+        if (!morphologyRules.containsKey(typeId)) {
+            return;
+        }
+
+        List<MorphologyRule> rules = morphologyRules.get(typeId);
+        List<MorphologyRule> iter = new ArrayList<>(rules);
+
+        for (MorphologyRule rule : iter) {
+            if (rule.getTargetKey().equals(targetKey)) {
+                rules.remove(rule);
+            }
+        }
+    }
+
+    public MorphologyRule[] getMorphologyRulesForType(int typeId) {
+        List<MorphologyRule> ret;
+
+        if (morphologyRules.containsKey(typeId)) {
+            ret = new ArrayList<>(morphologyRules.get(typeId));
+        } else {
+            ret = new ArrayList<>();
+        }
+
+        Collections.sort(ret);
+
+        return ret.toArray(new MorphologyRule[0]);
+    }
+
+    public MorphologyRule[] getMorphologyRulesForTarget(int typeId, String targetKey) {
+        List<MorphologyRule> ret = new ArrayList<>();
+
+        for (MorphologyRule rule : getMorphologyRulesForType(typeId)) {
+            if (rule.getTargetKey().equals(targetKey)) {
+                ret.add(rule);
+            }
+        }
+
+        Collections.sort(ret);
+
+        return ret.toArray(new MorphologyRule[0]);
+    }
+
+    public void moveMorphologyRulesUp(int typeId, String targetKey, List<MorphologyRule> ruleBlock) {
+        if (ruleBlock.isEmpty()) {
+            return;
+        }
+
+        List<MorphologyRule> targetRules = new ArrayList<>(Arrays.asList(getMorphologyRulesForTarget(typeId, targetKey)));
+        MorphologyRule beforeFirst = null;
+
+        for (int i = 0; i < targetRules.size(); i++) {
+            MorphologyRule curRule = targetRules.get(i);
+
+            if (curRule.equals(ruleBlock.get(0))) {
+                if (i != 0) {
+                    beforeFirst = targetRules.get(i - 1);
+                }
+
+                break;
+            }
+        }
+
+        if (beforeFirst != null) {
+            int lastOrder = ruleBlock.get(ruleBlock.size() - 1).getOrder();
+
+            for (int i = 0; i < ruleBlock.size(); i++) {
+                ruleBlock.get(i).setOrder(beforeFirst.getOrder() + i);
+            }
+
+            beforeFirst.setOrder(lastOrder);
+        }
+    }
+
+    public void moveMorphologyRulesDown(int typeId, String targetKey, List<MorphologyRule> ruleBlock) {
+        if (ruleBlock.isEmpty()) {
+            return;
+        }
+
+        List<MorphologyRule> targetRules = new ArrayList<>(Arrays.asList(getMorphologyRulesForTarget(typeId, targetKey)));
+        MorphologyRule afterLast = null;
+
+        for (int i = 0; i < targetRules.size(); i++) {
+            MorphologyRule curRule = targetRules.get(i);
+
+            if (curRule.equals(ruleBlock.get(ruleBlock.size() - 1))) {
+                if (i != targetRules.size() - 1) {
+                    afterLast = targetRules.get(i + 1);
+                }
+
+                break;
+            }
+        }
+
+        if (afterLast != null) {
+            int firstOrder = ruleBlock.get(0).getOrder();
+
+            for (MorphologyRule rule : ruleBlock) {
+                rule.setOrder(rule.getOrder() + 1);
+            }
+
+            afterLast.setOrder(firstOrder);
+        }
+    }
+
+    private void smoothMorphologyRules() {
+        morphologyRules.values().forEach(ruleList -> {
+            Map<String, List<MorphologyRule>> targetRuleMap = new HashMap<>();
+
+            ruleList.forEach(rule -> {
+                targetRuleMap.computeIfAbsent(rule.getTargetKey(), key -> new ArrayList<>()).add(rule);
+            });
+
+            targetRuleMap.values().forEach(targetRules -> {
+                Collections.sort(targetRules);
+                int newOrder = 1;
+
+                for (MorphologyRule rule : targetRules) {
+                    rule.setOrder(newOrder);
+                    newOrder++;
+                }
+            });
+        });
+    }
+
+    public ConjugationPair[] getMorphologyTargets(Integer typeId) {
+        List<ConjugationPair> ret = new ArrayList<>();
+        ret.add(new ConjugationPair(MORPH_TARGET_LEMMA, "Lemma"));
+        ret.add(new ConjugationPair(MORPH_TARGET_STEM, "Stem"));
+        ret.addAll(Arrays.asList(getAllCombinedIds(typeId)));
+        return ret.toArray(new ConjugationPair[0]);
+    }
+
+    public String getMorphologyTargetLabel(int typeId, String targetKey) {
+        for (ConjugationPair pair : getMorphologyTargets(typeId)) {
+            if (pair.combinedId.equals(targetKey)) {
+                return pair.label;
+            }
+        }
+
+        return targetKey;
+    }
+
+    public boolean isMorphologyBuiltInTarget(String targetKey) {
+        return MORPH_TARGET_LEMMA.equals(targetKey) || MORPH_TARGET_STEM.equals(targetKey);
+    }
+
     /**
      * add a declension generation rule to the list
      *
@@ -484,11 +682,66 @@ public class ConjugationManager {
      * @return new word value if exists, empty string otherwise
      * @throws java.lang.Exception on bad regex
      */
-    public String declineWord(ConWord word, String combinedId) throws Exception {
-        ConjugationGenRule[] rules = getConjugationRules(word);
+    public String generateWordForm(ConWord word, String combinedId) throws Exception {
         decGenDebug.clear();
         decGenDebug.add("APPLIED RULES BREAKDOWN:\n");
-        String ret = word.getValue();
+
+        MorphologyRule[] targetMorphRules = getMorphologyRulesForTarget(word.getWordTypeId(), combinedId);
+        boolean hasMorphologyRules = targetMorphRules.length > 0;
+
+        if (isMorphologyBuiltInTarget(combinedId)) {
+            if (!hasMorphologyRules) {
+                return word.getValue();
+            }
+
+            return morphologyEngine.apply(
+                    word,
+                    combinedId,
+                    getMorphologyTargetLabel(word.getWordTypeId(), combinedId),
+                    targetMorphRules,
+                    decGenDebug).getForm();
+        }
+
+        if (!hasMorphologyRules) {
+            return declineWordLegacy(word, combinedId, word.getValue()).form;
+        }
+
+        String morphForm = morphologyEngine.apply(
+                word,
+                combinedId,
+                getMorphologyTargetLabel(word.getWordTypeId(), combinedId),
+                targetMorphRules,
+                decGenDebug).getForm();
+        ConWord tempWord = copyWordWithValue(word, morphForm);
+        LegacyGenerationResult legacyResult = declineWordLegacy(tempWord, combinedId, morphForm);
+
+        return legacyResult.matchedTargetRule ? legacyResult.form : morphForm;
+    }
+
+    public String declineWord(ConWord word, String combinedId) throws Exception {
+        return generateWordForm(word, combinedId);
+    }
+
+    private ConWord copyWordWithValue(ConWord word, String value) {
+        ConWord ret = new ConWord();
+        ret.setCore(word.getCore());
+
+        if (word.getCore() != null) {
+            ret.setEqual(word);
+        } else {
+            ret.setLocalWord(word.getLocalWord());
+            ret.setWordTypeId(word.getWordTypeId());
+            ret.setDefinition(word.getDefinition());
+        }
+
+        ret.setValue(value);
+        return ret;
+    }
+
+    private LegacyGenerationResult declineWordLegacy(ConWord word, String combinedId, String startValue) throws Exception {
+        ConjugationGenRule[] rules = getConjugationRules(word);
+        String ret = startValue;
+        boolean matchedTargetRule = false;
 
         for (ConjugationGenRule curRule : rules) {
             boolean ruleAppliesCombId = curRule.getCombinationId().equals(combinedId);
@@ -504,6 +757,8 @@ public class ConjugationManager {
                 decGenDebug.add(debugString);
                 continue;
             }
+
+            matchedTargetRule = true;
             
             debugString += curRule.getDebugString();
 
@@ -531,7 +786,7 @@ public class ConjugationManager {
         // if rules are empty, no transformation took place: return blank string
         ret = rules.length == 0 ? "" : ret;
         
-        return ret;
+        return new LegacyGenerationResult(ret, matchedTargetRule);
     }
 
     public void addConjugationToWord(Integer wordId, Integer declensionId, ConjugationNode declension) {
@@ -1197,6 +1452,7 @@ public class ConjugationManager {
         
         // ensure rule IDs are contiguous before save
         this.smoothRules();
+        this.smoothMorphologyRules();
 
         // record declension templates
         declensionSet = dTemplates.entrySet();
@@ -1220,6 +1476,12 @@ public class ConjugationManager {
 
         // record declension autogeneration rules
         generationRules.values().forEach((rules) -> {
+            rules.forEach((rule) -> {
+                rule.writeXML(doc, declensionCollection);
+            });
+        });
+
+        morphologyRules.values().forEach((rules) -> {
             rules.forEach((rule) -> {
                 rule.writeXML(doc, declensionCollection);
             });
@@ -1422,7 +1684,7 @@ public class ConjugationManager {
     }
     
     public boolean isEmpty() {
-        return generationRules.isEmpty();
+        return generationRules.isEmpty() && morphologyRules.isEmpty();
     }
     
     @Override
@@ -1434,6 +1696,7 @@ public class ConjugationManager {
         } else if (comp instanceof ConjugationManager) {
             ConjugationManager compMan = (ConjugationManager)comp;
             ret = (generationRules == null && compMan.generationRules == null) || generationRules.equals(compMan.generationRules);
+            ret = ret && ((morphologyRules == null && compMan.morphologyRules == null) || morphologyRules.equals(compMan.morphologyRules));
             ret = ret && ((dList == null && compMan.dList == null) || dList.equals(compMan.dList));
             ret = ret && combSettings.equals(compMan.combSettings);
         }
@@ -1445,6 +1708,7 @@ public class ConjugationManager {
     public int hashCode() {
         int hash = 7;
         hash = 41 * hash + Objects.hashCode(this.generationRules);
+        hash = 41 * hash + Objects.hashCode(this.morphologyRules);
         hash = 41 * hash + Objects.hashCode(this.dList);
         hash = 41 * hash + Objects.hashCode(this.dTemplates);
         hash = 41 * hash + Objects.hashCode(this.combSettings);

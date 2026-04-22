@@ -1314,7 +1314,11 @@ public class ScrZompistLexiconGen extends PFrame {
                 .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(
+        javax.swing.UIManager.getColor("Separator.foreground") != null
+                ? javax.swing.UIManager.getColor("Separator.foreground")
+                : javax.swing.UIManager.getColor("Label.foreground")
+));
 
         txtSyllableTypes.setColumns(20);
         txtSyllableTypes.setLineWrap(true);

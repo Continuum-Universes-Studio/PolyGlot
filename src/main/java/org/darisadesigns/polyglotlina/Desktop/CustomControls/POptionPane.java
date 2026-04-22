@@ -38,6 +38,11 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JRootPane;
 import javax.swing.UIManager;
+import javax.swing.JLabel;
+import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.JComponent;
+import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
 
 // TODO: This class is poorly written and largely copy/pasted from POptionPane,
 // which is very bad practice. Consider heavy refactoring after identifying all
@@ -59,7 +64,18 @@ public class POptionPane extends JOptionPane {
         super(_message, _messageType, _optionType, _icon, _options, _initialValue);
         
     }
+    private static boolean isNightModeSafe() {
+        try {
+            if (PolyGlot.getPolyGlot() != null
+                    && PolyGlot.getPolyGlot().getOptionsManager() != null) {
+                return PolyGlot.getPolyGlot().getOptionsManager().isNightMode();
+            }
+        } catch (Exception ignored) {
+            // fallback
+        }
 
+        return false; // default = light mode
+    }
     public static int internalShowOptionDialog(final Component parentComponent,
             Object message, String title, int optionType, int messageType,
             Icon icon, Object[] options, Object initialValue)
@@ -81,7 +97,22 @@ public class POptionPane extends JOptionPane {
         dialog.setAlwaysOnTop(true);
         dialog.setModal(true);
 
-        setAllWhite(pane);
+        boolean nightMode = isNightModeSafe();
+        Color bgColor = org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager.getPanelBGColor(nightMode);
+        Color fgColor = javax.swing.UIManager.getColor("Label.foreground");
+
+        if (fgColor == null) {
+            fgColor = Color.WHITE;
+        }
+
+        dialog.getRootPane().setBackground(bgColor);
+        dialog.getRootPane().setForeground(fgColor);
+        dialog.getContentPane().setBackground(bgColor);
+        dialog.getContentPane().setForeground(fgColor);
+
+        applyNightTheme(pane);
+        applyNightTheme(dialog.getRootPane());
+        applyNightTheme(dialog.getContentPane());
         
         // prevent locking of application
         if(parentIsModal) {
@@ -122,13 +153,55 @@ public class POptionPane extends JOptionPane {
         return ret;
     }
 
-    private static void setAllWhite(Container c) {
-        Component[] comp = c.getComponents();
+    private static void applyNightTheme(Component c) {
+        if (c == null) {
+            return;
+        }
 
-        c.setBackground(Color.white);
-        for (Component curComp : comp) {
-            curComp.setBackground(Color.white);
-            setAllWhite((Container) curComp);
+        boolean nightMode = isNightModeSafe();
+        Color bgColor = org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager.getPanelBGColor(nightMode);
+        Color fgColor = javax.swing.UIManager.getColor("Label.foreground");
+        Color inputBg = javax.swing.UIManager.getColor("TextField.background");
+        Color inputFg = javax.swing.UIManager.getColor("TextField.foreground");
+
+        if (fgColor == null) {
+            fgColor = Color.WHITE;
+        }
+        if (inputBg == null) {
+            inputBg = bgColor;
+        }
+        if (inputFg == null) {
+            inputFg = fgColor;
+        }
+
+        c.setBackground(bgColor);
+        c.setForeground(fgColor);
+
+        if (c instanceof JLabel label) {
+            label.setForeground(fgColor);
+            label.setBackground(bgColor);
+        } else if (c instanceof JTextArea area) {
+            area.setBackground(bgColor);
+            area.setForeground(fgColor);
+            area.setCaretColor(fgColor);
+            area.setOpaque(true);
+        } else if (c instanceof JTextPane pane) {
+            pane.setBackground(bgColor);
+            pane.setForeground(fgColor);
+            pane.setCaretColor(fgColor);
+            pane.setOpaque(true);
+        } else if (c instanceof javax.swing.text.JTextComponent text) {
+            text.setBackground(inputBg);
+            text.setForeground(inputFg);
+            text.setCaretColor(inputFg);
+        } else if (c instanceof JComponent jc) {
+            jc.setOpaque(true);
+        }
+
+        if (c instanceof Container container) {
+            for (Component child : container.getComponents()) {
+                applyNightTheme(child);
+            }
         }
     }
 

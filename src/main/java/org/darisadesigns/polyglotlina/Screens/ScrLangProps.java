@@ -603,6 +603,7 @@ public class ScrLangProps extends PFrame {
         txtLocalLanguage = new PTextField(core, true, "Local Language");
         jScrollPane4 = new javax.swing.JScrollPane();
         txtAuthorCopyright = new PTextPane(core, true, "-- Author/Copyright Info --");
+        btnEvolutionProfile = new PButton(nightMode);
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblAlphabet = new PTable(core);
@@ -614,9 +615,9 @@ public class ScrLangProps extends PFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Language Properties");
-        setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel2.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
         btnChangeFont.setText("Conlang Font");
@@ -630,7 +631,7 @@ public class ScrLangProps extends PFrame {
         txtFont.setToolTipText("Conlang Font");
         txtFont.setEnabled(false);
 
-        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel3.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel3.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         jPanel3.setMaximumSize(new java.awt.Dimension(470, 32767));
 
@@ -789,7 +790,7 @@ public class ScrLangProps extends PFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel5.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel5.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel5.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
         txtLangName.setToolTipText("Your Conlang's Name");
@@ -798,6 +799,14 @@ public class ScrLangProps extends PFrame {
 
         jScrollPane4.setViewportView(txtAuthorCopyright);
 
+        btnEvolutionProfile.setText("Evolution Profile...");
+        btnEvolutionProfile.setToolTipText("Configure parent language linkage and ordered sound-change rules.");
+        btnEvolutionProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEvolutionProfileActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -805,6 +814,9 @@ public class ScrLangProps extends PFrame {
             .addComponent(txtLangName, javax.swing.GroupLayout.DEFAULT_SIZE, 658, Short.MAX_VALUE)
             .addComponent(txtLocalLanguage, javax.swing.GroupLayout.Alignment.TRAILING)
             .addComponent(jScrollPane4)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnEvolutionProfile))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -814,11 +826,13 @@ public class ScrLangProps extends PFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(txtLocalLanguage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 154, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnEvolutionProfile)
                 .addContainerGap())
         );
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         tblAlphabet.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -833,7 +847,7 @@ public class ScrLangProps extends PFrame {
         ));
         jScrollPane1.setViewportView(tblAlphabet);
 
-        jLabel4.setBackground(new java.awt.Color(255, 255, 255));
+        jLabel4.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel4.setText("Alphabetic Order");
 
@@ -976,6 +990,10 @@ public class ScrLangProps extends PFrame {
         deleteAlpha();
     }//GEN-LAST:event_btnDeleteAlphaActionPerformed
 
+    private void btnEvolutionProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEvolutionProfileActionPerformed
+        new ScrEvolutionProfile(core).setVisible(true);
+    }//GEN-LAST:event_btnEvolutionProfileActionPerformed
+
     public static ScrLangProps run(DictCore _core) {
         ScrLangProps s = new ScrLangProps(_core);
         s.setCore(_core);
@@ -988,6 +1006,7 @@ public class ScrLangProps extends PFrame {
     private javax.swing.JButton btnAlphaUp;
     private javax.swing.JButton btnChangeFont;
     private javax.swing.JButton btnDeleteAlpha;
+    private javax.swing.JButton btnEvolutionProfile;
     private javax.swing.JButton btnFontLocal;
     private javax.swing.JCheckBox chkDisableProcRegex;
     private javax.swing.JCheckBox chkExpandedLexList;

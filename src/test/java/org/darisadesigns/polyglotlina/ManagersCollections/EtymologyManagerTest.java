@@ -25,6 +25,7 @@ import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.Nodes.DescendantLink;
 import org.darisadesigns.polyglotlina.PGTUtil;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
@@ -219,6 +220,79 @@ public class EtymologyManagerTest {
             if (testFile.exists()) {
                 testFile.delete();
             }
+        }
+    }
+
+    @Test
+    public void testDescendantLinkSyncLifecycle() {
+        System.out.println("EtymologyManagerTest.testDescendantLinkSyncLifecycle");
+
+        try {
+            DictCore core = DummyCore.newCore();
+            ConWord child = new ConWord();
+            child.setValue("child");
+            int childId = core.getWordCollection().addWord(child);
+            child = core.getWordCollection().getNodeById(childId);
+
+            DescendantLink firstLink = new DescendantLink();
+            firstLink.setParentWordId(10);
+            firstLink.setParentWordValue("atha");
+            firstLink.setParentWordDefinition("first");
+            firstLink.setParentLanguageName("Proto One");
+            core.getEtymologyManager().setDescendantLink(child, firstLink);
+
+            assertEquals(1, core.getEtymologyManager().getWordExternalParents(childId).length);
+            assertEquals("atha", core.getEtymologyManager().getWordExternalParents(childId)[0].getValue());
+            assertEquals("Proto One", core.getEtymologyManager().getWordExternalParents(childId)[0].getExternalLanguage());
+
+            DescendantLink secondLink = new DescendantLink();
+            secondLink.setParentWordId(11);
+            secondLink.setParentWordValue("eska");
+            secondLink.setParentWordDefinition("second");
+            secondLink.setParentLanguageName("Proto Two");
+            core.getEtymologyManager().setDescendantLink(child, secondLink);
+
+            assertEquals(1, core.getEtymologyManager().getWordExternalParents(childId).length);
+            assertEquals("eska", core.getEtymologyManager().getWordExternalParents(childId)[0].getValue());
+            assertEquals("Proto Two", core.getEtymologyManager().getWordExternalParents(childId)[0].getExternalLanguage());
+            assertEquals(secondLink, child.getDescendantLink());
+
+            core.getEtymologyManager().removeDescendantLink(child);
+
+            assertEquals(0, core.getEtymologyManager().getWordExternalParents(childId).length);
+            assertTrue(child.getDescendantLink().isEmpty());
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    public void testReplaceExternalRelationUpdatesKeys() {
+        System.out.println("EtymologyManagerTest.testReplaceExternalRelationUpdatesKeys");
+
+        try {
+            DictCore core = DummyCore.newCore();
+            ConWord child = new ConWord();
+            child.setValue("child");
+            int childId = core.getWordCollection().addWord(child);
+
+            EtyExternalParent oldParent = new EtyExternalParent();
+            oldParent.setValue("atha");
+            oldParent.setExternalLanguage("Proto One");
+            oldParent.setDefinition("old");
+            core.getEtymologyManager().addExternalRelation(oldParent, childId);
+
+            EtyExternalParent newParent = new EtyExternalParent();
+            newParent.setValue("eska");
+            newParent.setExternalLanguage("Proto Two");
+            newParent.setDefinition("new");
+            core.getEtymologyManager().replaceExternalRelation(oldParent, newParent, childId);
+
+            assertFalse(core.getEtymologyManager().childHasExtParent(childId, oldParent.getUniqueId()));
+            assertTrue(core.getEtymologyManager().childHasExtParent(childId, newParent.getUniqueId()));
+            assertEquals("eska", core.getEtymologyManager().getWordExternalParents(childId)[0].getValue());
+        } catch (Exception e) {
+            fail(e);
         }
     }
 }

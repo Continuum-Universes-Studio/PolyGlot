@@ -29,7 +29,14 @@ import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
 import org.darisadesigns.polyglotlina.Nodes.ConjugationGenRule;
 import org.darisadesigns.polyglotlina.Nodes.ConjugationGenTransform;
+import org.darisadesigns.polyglotlina.Nodes.ConjugationNode;
 import org.darisadesigns.polyglotlina.Nodes.ConjugationPair;
+import org.darisadesigns.polyglotlina.Nodes.MorphologyCondition;
+import org.darisadesigns.polyglotlina.Nodes.MorphologyConditionOperator;
+import org.darisadesigns.polyglotlina.Nodes.MorphologyOperationType;
+import org.darisadesigns.polyglotlina.Nodes.MorphologyRule;
+import org.darisadesigns.polyglotlina.Nodes.TypeNode;
+import org.darisadesigns.polyglotlina.Nodes.WordClass;
 import org.darisadesigns.polyglotlina.PGTUtil;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
@@ -217,6 +224,122 @@ public class ConjugationManagerTest {
     public void testevolveConjugatedWordRules() {
         
     }
+
+    @Test
+    public void testMorphologyOnlyGeneration() {
+        System.out.println("ConjugationManagerTest.testMorphologyOnlyGeneration");
+
+        try {
+            TestContext context = buildMorphologyContext("kar");
+            MorphologyRule rule = new MorphologyRule(context.typeId(), "plural");
+            ConjugationManager manager = core.getConjugationManager();
+
+            rule.setOperationType(MorphologyOperationType.append_suffix);
+            rule.setValue1("im");
+            rule.addCondition(new MorphologyCondition("nounClass", MorphologyConditionOperator.equals, "strong"));
+            manager.addMorphologyRule(rule);
+
+            assertEquals("karim", manager.generateWordForm(context.word(), "plural"));
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    public void testMorphologyThenLegacyInterop() {
+        System.out.println("ConjugationManagerTest.testMorphologyThenLegacyInterop");
+
+        try {
+            TestContext context = buildMorphologyContext("dor");
+            ConjugationManager manager = core.getConjugationManager();
+            ConjugationNode template = new ConjugationNode(-1, manager);
+            template.setValue("Plural");
+            template.setDimensionless(true);
+            ConjugationNode node = manager.addConjugationToTemplate(context.typeId(), -1, template);
+            String targetKey = node.getCombinedDimId();
+            MorphologyRule morphRule = new MorphologyRule(context.typeId(), targetKey);
+            ConjugationGenRule legacyRule = new ConjugationGenRule(context.typeId(), targetKey);
+
+            morphRule.setOperationType(MorphologyOperationType.append_suffix);
+            morphRule.setValue1("en");
+            manager.addMorphologyRule(morphRule);
+
+            legacyRule.setRegex(".*");
+            legacyRule.addClassToFilterList(-1, -1);
+            legacyRule.addTransform(new ConjugationGenTransform("en$", "in"));
+            manager.addConjugationGenRule(legacyRule);
+
+            assertEquals("dorin", manager.generateWordForm(context.word(), targetKey));
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    public void testLegacyOnlyRulesStillWork() {
+        System.out.println("ConjugationManagerTest.testLegacyOnlyRulesStillWork");
+
+        try {
+            TestContext context = buildMorphologyContext("dor");
+            ConjugationManager manager = core.getConjugationManager();
+            ConjugationNode template = new ConjugationNode(-1, manager);
+            template.setValue("Plural");
+            template.setDimensionless(true);
+            ConjugationNode node = manager.addConjugationToTemplate(context.typeId(), -1, template);
+            String targetKey = node.getCombinedDimId();
+            ConjugationGenRule legacyRule = new ConjugationGenRule(context.typeId(), targetKey);
+
+            legacyRule.setRegex(".*");
+            legacyRule.addClassToFilterList(-1, -1);
+            legacyRule.addTransform(new ConjugationGenTransform("$", "en"));
+            manager.addConjugationGenRule(legacyRule);
+
+            assertEquals("doren", manager.declineWord(context.word(), targetKey));
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    public void testConWordGetWordFormUsesMorphologyEngine() {
+        System.out.println("ConjugationManagerTest.testConWordGetWordFormUsesMorphologyEngine");
+
+        try {
+            TestContext context = buildMorphologyContext("kar");
+            MorphologyRule rule = new MorphologyRule(context.typeId(), "plural");
+
+            rule.setOperationType(MorphologyOperationType.append_suffix);
+            rule.setValue1("im");
+            core.getConjugationManager().addMorphologyRule(rule);
+
+            assertEquals("karim", context.word().getWordForm("plural"));
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    private TestContext buildMorphologyContext(String value) throws Exception {
+        TypeNode type = new TypeNode();
+        type.setValue("noun");
+        int typeId = core.getTypes().addNode(type);
+
+        WordClass wordClass = new WordClass();
+        wordClass.setValue("nounClass");
+        wordClass.deleteApplyType(-1);
+        wordClass.addApplyType(typeId);
+        int strongId = wordClass.addValue("strong").getId();
+        int classId = core.getWordClassCollection().addNode(wordClass);
+
+        ConWord word = new ConWord();
+        word.setValue(value);
+        word.setWordTypeId(typeId);
+        word.setClassValue(classId, strongId);
+        int wordId = core.getWordCollection().addWord(word);
+
+        return new TestContext(core.getWordCollection().getNodeById(wordId), typeId);
+    }
+
+    private record TestContext(ConWord word, int typeId) {}
     
     private boolean allDeprecatedFormsPresent(ConjugationManager decMan, 
             ConWord word, 

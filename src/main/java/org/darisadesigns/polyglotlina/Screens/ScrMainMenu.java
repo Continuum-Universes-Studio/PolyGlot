@@ -87,6 +87,7 @@ import org.darisadesigns.polyglotlina.Desktop.DesktopPropertiesManager;
 import org.darisadesigns.polyglotlina.Desktop.ExportFileHelper;
 import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.DesktopGrammarManager;
 import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.DesktopOptionsManager;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
 import org.darisadesigns.polyglotlina.Desktop.PGTUtil;
 import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
 import org.darisadesigns.polyglotlina.DictCore;
@@ -1013,6 +1014,8 @@ public final class ScrMainMenu extends PFrame {
      * @param display component to be added as main display
      */
     private void changeScreen(PFrame newScreen, Component display, PButton button) {
+        boolean isNightMode = PolyGlot.getPolyGlot().getOptionsManager().isNightMode();
+
         // simply fail if current window cannot close. Window is responsible
         // for informing user of reason.
         if (curWindow != null && !curWindow.canClose()) {
@@ -1053,6 +1056,9 @@ public final class ScrMainMenu extends PFrame {
                     dim.height + insets.bottom + insets.top);
         }
 
+        pnlMain.setBackground(VisualStyleManager.getPanelBGColor(isNightMode));
+        VisualStyleManager.applyTheme(display, isNightMode);
+
         // set new screen
         GroupLayout layout = new GroupLayout(pnlMain);
         pnlMain.setLayout(layout);
@@ -1072,6 +1078,8 @@ public final class ScrMainMenu extends PFrame {
         );
 
         curWindow = newScreen;
+        pnlMain.revalidate();
+        pnlMain.repaint();
 
         if (button != null) {
             deselectButtons();
@@ -1623,12 +1631,12 @@ public final class ScrMainMenu extends PFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("PolyGlot Language Construction Toolkit");
-        setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
-        pnlToDoSplit.setBackground(new java.awt.Color(255, 255, 255));
+        pnlToDoSplit.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlToDoSplit.setDividerLocation(675);
 
-        pnlToDo.setBackground(new java.awt.Color(255, 255, 255));
+        pnlToDo.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlToDo.setToolTipText("");
         pnlToDo.setMinimumSize(new java.awt.Dimension(1, 1));
 
@@ -1774,7 +1782,7 @@ public final class ScrMainMenu extends PFrame {
                 .addContainerGap(127, Short.MAX_VALUE))
         );
 
-        pnlMain.setBackground(new java.awt.Color(255, 255, 255));
+        pnlMain.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlMain.setMaximumSize(new java.awt.Dimension(4000, 4000));
 
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);

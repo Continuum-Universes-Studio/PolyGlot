@@ -112,8 +112,14 @@ public class LangPropertiesParser extends BaseParser {
             case PGTUtil.LANG_PROP_ZOMPIST_MONOSYLLABLE_FREQUENCY -> {
                 propMan.setZompistMonosylableFrequency(Integer.parseInt(node.getTextContent()));
             }
+            case PGTUtil.LANG_PROP_LINKED_LANGUAGES_XID -> {
+                new LinkedLanguagesParser(parseIssues).parse(node, core);
+            }
             case PGTUtil.LANG_PROP_CHAR_REP_CONTAINER_XID -> {
                 new CharacterReplacementCollectionParser(parseIssues).parse(node, core);
+            }
+            case PGTUtil.LANG_PROP_EVOLUTION_PROFILE_XID -> {
+                new LanguageEvolutionProfileParser(parseIssues).parse(node, core);
             }
             case PGTUtil.FONT_CON_XID -> {
                 propMan.setFontCon(node.getTextContent());

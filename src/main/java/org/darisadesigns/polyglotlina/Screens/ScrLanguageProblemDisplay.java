@@ -94,20 +94,27 @@ public class ScrLanguageProblemDisplay extends PDialog {
 
         jSplitPane1.setLeftComponent(jScrollPane1);
 
+        java.awt.Color panelBg = javax.swing.UIManager.getColor("Panel.background");
+        java.awt.Color panelFg = javax.swing.UIManager.getColor("Label.foreground");
+
         jTextArea1.setEditable(false);
-        jTextArea1.setBackground(new java.awt.Color(230, 230, 230));
         jTextArea1.setColumns(20);
         jTextArea1.setLineWrap(true);
         jTextArea1.setRows(5);
         jTextArea1.setToolTipText("Problems with lexical entries");
         jTextArea1.setWrapStyleWord(true);
+        jTextArea1.setBackground(panelBg);
+        jTextArea1.setForeground(panelFg);
+        jTextArea1.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 6, 6, 6));
         jScrollPane2.setViewportView(jTextArea1);
 
         jSplitPane1.setRightComponent(jScrollPane2);
 
         jTextField1.setEditable(false);
-        jTextField1.setBackground(new java.awt.Color(230, 230, 230));
+        jTextField1.setBackground(panelBg);
+        jTextField1.setForeground(panelFg);
         jTextField1.setToolTipText("Count of problems found in lexicon scan");
+        jTextField1.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -129,7 +136,7 @@ public class ScrLanguageProblemDisplay extends PDialog {
         );
 
         pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
     private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList1ValueChanged
         LexiconProblemNode problemNode = jList1.getSelectedValue();

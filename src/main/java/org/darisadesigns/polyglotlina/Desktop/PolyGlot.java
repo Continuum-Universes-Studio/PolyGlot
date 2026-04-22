@@ -19,7 +19,6 @@
  */
 package org.darisadesigns.polyglotlina.Desktop;
 
-import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -36,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
 import javax.swing.InputMap;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -47,14 +47,15 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.DefaultEditorKit;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import org.darisadesigns.polyglotlina.Desktop.CustomControls.DesktopInfoBox;
-import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.DesktopGrammarManager;
-import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.DesktopOptionsManager;
-import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
+
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.OSHandler;
 import org.darisadesigns.polyglotlina.OSHandler.CoreUpdatedListener;
 import org.darisadesigns.polyglotlina.OSHandler.FileReadListener;
+import org.darisadesigns.polyglotlina.Desktop.CustomControls.DesktopInfoBox;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.DesktopGrammarManager;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.DesktopOptionsManager;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
 import org.darisadesigns.polyglotlina.Screens.ScrAbout;
 import org.darisadesigns.polyglotlina.Screens.ScrMainMenu;
 import org.darisadesigns.polyglotlina.Webservice.WebService;
@@ -152,8 +153,7 @@ public final class PolyGlot {
             }
 
             setupNimbus();
-            setupCustomUI();
-            conditionalBetaSetup();
+            setupCustomUI(opMan.isNightMode());
             testNonModularBridge();
             setupOSSpecificCutCopyPaste();
         }
@@ -180,6 +180,8 @@ public final class PolyGlot {
                 Platform.setImplicitExit(false);
 
                 PolyGlot.polyGlot = new PolyGlot(core, osHandler, opMan);
+                
+                conditionalBetaSetup();
 
                 s = new ScrMainMenu(core);
                 polyGlot.setRootWindow(s);
@@ -490,13 +492,8 @@ public final class PolyGlot {
         }
     }
 
-    private static void setupCustomUI() {
-        UIManager.put("ScrollBarUI", "org.darisadesigns.polyglotlina.Desktop.CustomControls.PScrollBarUI");
-        UIManager.put("SplitPaneUI", "org.darisadesigns.polyglotlina.Desktop.CustomControls.PSplitPaneUI");
-        UIManager.put("ToolTipUI", "org.darisadesigns.polyglotlina.Desktop.CustomControls.PToolTipUI");
-        UIManager.put("OptionPane.background", Color.WHITE);
-        UIManager.put("Panel.background", Color.WHITE);
-        UIManager.getLookAndFeelDefaults().put("Panel.background", Color.WHITE);
+    private static void setupCustomUI(boolean isNightMode) {
+        VisualStyleManager.applyThemeDefaults(isNightMode);
     }
 
     /**
@@ -570,6 +567,8 @@ public final class PolyGlot {
     }
 
     public void refreshUiDefaults() {
+        setupNimbus();
+        setupCustomUI(optionsManager.isNightMode());
         uiDefaults = VisualStyleManager.generateUIOverrides(optionsManager.isNightMode());
         if (rootWindow != null) {
             Point location = rootWindow.getLocation();

@@ -1019,7 +1019,7 @@ public final class ScrDeclensionGenClassic extends PDialog {
         setTitle("Conjugation/Declension Autogeneration Setup");
         setMinimumSize(new java.awt.Dimension(568, 532));
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel2.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
         jLabel1.setText("Conjugation/Declensions");
@@ -1038,8 +1038,12 @@ public final class ScrDeclensionGenClassic extends PDialog {
         });
         jScrollPane1.setViewportView(lstCombinedDec);
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(
+        javax.swing.UIManager.getColor("Separator.foreground") != null
+                ? javax.swing.UIManager.getColor("Separator.foreground")
+                : javax.swing.UIManager.getColor("Label.foreground")
+));
 
         jLabel2.setText("Rules");
 
@@ -1094,7 +1098,7 @@ public final class ScrDeclensionGenClassic extends PDialog {
             }
         });
 
-        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel3.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         txtRuleName.setToolTipText("Name of rule");
         txtRuleName.setEnabled(false);
@@ -1200,7 +1204,7 @@ public final class ScrDeclensionGenClassic extends PDialog {
                     .addComponent(btnDeleteTransform, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
-        pnlApplyClasses.setBackground(new java.awt.Color(255, 255, 255));
+        pnlApplyClasses.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         javax.swing.GroupLayout pnlApplyClassesLayout = new javax.swing.GroupLayout(pnlApplyClasses);
         pnlApplyClasses.setLayout(pnlApplyClassesLayout);

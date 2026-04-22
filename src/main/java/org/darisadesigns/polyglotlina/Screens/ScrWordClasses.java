@@ -456,12 +456,12 @@ public final class ScrWordClasses extends PFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Word Classes");
-        setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         jSplitPane1.setDividerLocation(150);
         jSplitPane1.setPreferredSize(new java.awt.Dimension(200, 200));
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel2.setPreferredSize(new java.awt.Dimension(85, 200));
 
         lstProperties.setToolTipText("Properties (such as gender) of words in your language");
@@ -508,7 +508,7 @@ public final class ScrWordClasses extends PFrame {
 
         jSplitPane1.setLeftComponent(jPanel2);
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
         jPanel1.setToolTipText("");
         jPanel1.setPreferredSize(new java.awt.Dimension(333, 200));
@@ -531,7 +531,7 @@ public final class ScrWordClasses extends PFrame {
             }
         });
 
-        pnlTypes.setBackground(new java.awt.Color(255, 255, 255));
+        pnlTypes.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlTypes.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         pnlTypes.setToolTipText("Parts of speech this property applies to");
 

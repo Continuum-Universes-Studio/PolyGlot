@@ -29,6 +29,8 @@ import java.util.Objects;
 import org.darisadesigns.polyglotlina.CustomControls.PAlphaMap;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.Nodes.LanguageEvolutionProfile;
+import org.darisadesigns.polyglotlina.Nodes.LinkedLanguage;
 import org.darisadesigns.polyglotlina.PGTUtil;
 import org.darisadesigns.polyglotlina.WebInterface;
 import org.w3c.dom.Document;
@@ -64,8 +66,10 @@ public abstract class PropertiesManager {
     protected byte[] cachedConFont = null;
     protected byte[] cachedLocalFont = null;
     private final Map<String, String> charRep = new HashMap<>();
+    private final List<LinkedLanguage> linkedLanguages = new ArrayList<>();
     protected DictCore core;
     private boolean useSimplifiedConjugations = false;
+    private final LanguageEvolutionProfile languageEvolutionProfile = new LanguageEvolutionProfile();
 
     public PropertiesManager() {
         alphaOrder = new PAlphaMap<>();
@@ -569,6 +573,16 @@ public abstract class PropertiesManager {
             wordValue.appendChild(node);
         }
         propContainer.appendChild(wordValue);
+
+        if (!linkedLanguages.isEmpty()) {
+            wordValue = doc.createElement(PGTUtil.LANG_PROP_LINKED_LANGUAGES_XID);
+            for (LinkedLanguage linkedLanguage : getLinkedLanguages()) {
+                linkedLanguage.writeXML(doc, wordValue);
+            }
+            propContainer.appendChild(wordValue);
+        }
+
+        languageEvolutionProfile.writeXML(doc, propContainer);
     }
 
     /**
@@ -766,6 +780,64 @@ public abstract class PropertiesManager {
     public void setZompistSyllableTypes(String zompistSyllableTypes) {
         this.zompistSyllableTypes = zompistSyllableTypes;
     }
+
+    public List<LinkedLanguage> getLinkedLanguages() {
+        List<LinkedLanguage> ret = new ArrayList<>();
+
+        for (LinkedLanguage linkedLanguage : linkedLanguages) {
+            ret.add(new LinkedLanguage(linkedLanguage));
+        }
+
+        return ret;
+    }
+
+    public LinkedLanguage getLinkedLanguage(int index) {
+        if (index < 0 || index >= linkedLanguages.size()) {
+            return null;
+        }
+
+        return new LinkedLanguage(linkedLanguages.get(index));
+    }
+
+    public void clearLinkedLanguages() {
+        linkedLanguages.clear();
+    }
+
+    public void setLinkedLanguages(List<LinkedLanguage> linkedLanguages) {
+        this.linkedLanguages.clear();
+
+        if (linkedLanguages != null) {
+            for (LinkedLanguage linkedLanguage : linkedLanguages) {
+                addLinkedLanguage(linkedLanguage);
+            }
+        }
+    }
+
+    public void addLinkedLanguage(LinkedLanguage linkedLanguage) {
+        if (linkedLanguage != null && linkedLanguage.isValid()) {
+            linkedLanguages.add(new LinkedLanguage(linkedLanguage));
+        }
+    }
+
+    public void setLinkedLanguage(int index, LinkedLanguage linkedLanguage) {
+        if (linkedLanguage == null || !linkedLanguage.isValid()) {
+            return;
+        }
+
+        if (index > -1 && index < linkedLanguages.size()) {
+            linkedLanguages.set(index, new LinkedLanguage(linkedLanguage));
+        }
+    }
+
+    public void removeLinkedLanguage(int index) {
+        if (index > -1 && index < linkedLanguages.size()) {
+            linkedLanguages.remove(index);
+        }
+    }
+
+    public LanguageEvolutionProfile getLanguageEvolutionProfile() {
+        return languageEvolutionProfile;
+    }
     
     @Override
     public boolean equals(Object comp) {
@@ -799,6 +871,8 @@ public abstract class PropertiesManager {
             ret = ret && zompistSyllableTypes.trim().equals(prop.zompistSyllableTypes.trim());
             ret = ret && zompistDropoffRate == prop.zompistDropoffRate;
             ret = ret && zompistMonosylableFrequency == prop.zompistMonosylableFrequency;
+            ret = ret && linkedLanguages.equals(prop.linkedLanguages);
+            ret = ret && languageEvolutionProfile.equals(prop.languageEvolutionProfile);
         }
         
         return ret;

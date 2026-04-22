@@ -25,10 +25,10 @@ import org.darisadesigns.polyglotlina.Desktop.CustomControls.PLabel;
 import org.darisadesigns.polyglotlina.Desktop.DesktopIOHandler;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.WebInterface;
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URI;
+import java.awt.Color;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,8 +71,17 @@ public class ScrUpdateAlert extends PDialog {
         }
         
         jTextPane1.setContentType("text/html");
-        jPanel1.setBackground(Color.white);
-        super.getRootPane().getContentPane().setBackground(Color.white);
+
+        Color panelBg = javax.swing.UIManager.getColor("Panel.background");
+        Color panelFg = javax.swing.UIManager.getColor("Label.foreground");
+        Color textBg = javax.swing.UIManager.getColor("TextPane.background");
+        Color textFg = javax.swing.UIManager.getColor("TextPane.foreground");
+
+        jPanel1.setBackground(panelBg);
+        super.getRootPane().getContentPane().setBackground(panelBg);
+        jTextPane1.setBackground(textBg != null ? textBg : panelBg);
+        jTextPane1.setForeground(textFg != null ? textFg : panelFg);
+        jTextPane1.setCaretColor(textFg != null ? textFg : panelFg);
 
         Document doc = WebInterface.checkForUpdates();
         String ver = doc.getElementsByTagName("Version").item(0).getTextContent();
@@ -349,7 +358,9 @@ public class ScrUpdateAlert extends PDialog {
         jScrollPane2.setViewportBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
         jTextPane1.setEditable(false);
-        jTextPane1.setBackground(new java.awt.Color(204, 204, 204));
+        jTextPane1.setBackground(javax.swing.UIManager.getColor("TextPane.background"));
+        jTextPane1.setForeground(javax.swing.UIManager.getColor("TextPane.foreground"));
+        jTextPane1.setCaretColor(javax.swing.UIManager.getColor("TextPane.caretForeground"));
         jScrollPane2.setViewportView(jTextPane1);
 
         txtVersion.setText("--");

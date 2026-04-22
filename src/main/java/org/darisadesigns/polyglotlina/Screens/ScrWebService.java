@@ -169,7 +169,11 @@ public class ScrWebService extends PFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("PolyGlot Webservice Panel");
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(
+        javax.swing.UIManager.getColor("Separator.foreground") != null
+                ? javax.swing.UIManager.getColor("Separator.foreground")
+                : javax.swing.UIManager.getColor("Label.foreground")
+));
 
         jLabel1.setText("Port");
 

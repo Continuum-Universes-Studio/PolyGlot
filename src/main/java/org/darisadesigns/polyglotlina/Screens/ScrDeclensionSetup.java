@@ -535,7 +535,7 @@ public final class ScrDeclensionSetup extends PDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         jLabel1.setText("Conjugations");
 
@@ -547,7 +547,7 @@ public final class ScrDeclensionSetup extends PDialog {
         });
         jScrollPane1.setViewportView(lstDeclensionList);
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         txtDeclensionName.setEnabled(false);

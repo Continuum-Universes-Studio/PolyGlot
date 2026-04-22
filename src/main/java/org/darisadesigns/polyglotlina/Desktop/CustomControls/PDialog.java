@@ -34,6 +34,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import javax.swing.JDialog;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
 import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
 
 /**
@@ -194,7 +195,9 @@ public abstract class PDialog extends JDialog implements FocusListener, WindowFo
             }
 
             this.setAlwaysOnTop(true);
-            super.getRootPane().getContentPane().setBackground(Color.white);
+            super.getRootPane().getContentPane().setBackground(
+                    VisualStyleManager.getPanelBGColor(nightMode));
+            VisualStyleManager.applyTheme(super.getRootPane(), nightMode);
             firstVisible = false;
         }
         

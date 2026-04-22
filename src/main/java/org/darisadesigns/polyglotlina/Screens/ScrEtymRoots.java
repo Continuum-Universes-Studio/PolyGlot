@@ -31,6 +31,7 @@ import org.darisadesigns.polyglotlina.Desktop.DesktopIOHandler;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.ManagersCollections.EtymologyManager;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.Nodes.DescendantLink;
 import org.darisadesigns.polyglotlina.Nodes.EtyExternalParent;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -162,13 +163,7 @@ public final class ScrEtymRoots extends PDialog {
                                 "This is a brief text description of the root's definition.",
                                 extPar.getDefinition());
                         dialog.setVisible(true);
-                        var result = dialog.getOrderedFields();
-                        
-                        extPar.setValue(result[0].getText());
-                        extPar.setExternalLanguage(result[1].getText());
-                        extPar.setDefinition(result[2].getText());
-                        
-                        setupExternalParentsPanel();
+                        editExtParent(extPar, dialog.getOrderedFields());
                 }
 
                 @Override
@@ -240,9 +235,13 @@ public final class ScrEtymRoots extends PDialog {
      */
     private void delExtParent(EtyExternalParent parent) {
         int divLoc = jSplitPane1.getDividerLocation();
-        core.getEtymologyManager().delExternalRelation(parent, word.getId());
-        setupExternalParentsPanel();
-        jSplitPane1.setDividerLocation(divLoc);
+        if (core.getEtymologyManager().isMirroredDescendantParent(word, parent)) {
+            core.getEtymologyManager().removeDescendantLink(word);
+        } else {
+            core.getEtymologyManager().delExternalRelation(parent, word.getId());
+        }
+
+        refreshEtymologyView(divLoc);
     }
 
     /**
@@ -269,6 +268,47 @@ public final class ScrEtymRoots extends PDialog {
                 core.getEtymologyManager().addExternalRelation(newParent, word.getId());
             }
         }
+    }
+
+    private void editExtParent(EtyExternalParent parent, PTextField[] values) {
+        if (values.length == 0) {
+            return;
+        }
+
+        if (values.length != 3) {
+            new DesktopInfoBox(this).error("Wrong number number of values",
+                    "Wrong number of values provided to edit external parent.");
+            return;
+        }
+
+        if (values[0].getText().isEmpty()) {
+            new DesktopInfoBox(this).error("Blank word not allowed",
+                    "At minimum, a value for the external parent's word must be provided.");
+            return;
+        }
+
+        int divLoc = jSplitPane1.getDividerLocation();
+        if (core.getEtymologyManager().isMirroredDescendantParent(word, parent)) {
+            DescendantLink updatedLink = new DescendantLink(word.getDescendantLink());
+            updatedLink.setParentWordValue(values[0].getText());
+            updatedLink.setParentLanguageName(values[1].getText());
+            updatedLink.setParentWordDefinition(values[2].getText());
+            core.getEtymologyManager().setDescendantLink(word, updatedLink);
+        } else {
+            EtyExternalParent updatedParent = new EtyExternalParent();
+            updatedParent.setValue(values[0].getText());
+            updatedParent.setExternalLanguage(values[1].getText());
+            updatedParent.setDefinition(values[2].getText());
+            core.getEtymologyManager().replaceExternalRelation(parent, updatedParent, word.getId());
+        }
+
+        refreshEtymologyView(divLoc);
+    }
+
+    private void refreshEtymologyView(int divLoc) {
+        setupDrawPanel();
+        setupParentsPanels();
+        jSplitPane1.setDividerLocation(divLoc);
     }
 
     /**
@@ -387,22 +427,23 @@ public final class ScrEtymRoots extends PDialog {
         jPanel4 = new javax.swing.JPanel();
         jLabel3 = new PLabel("");
         pnlParentsExt = new javax.swing.JPanel();
+        btnGenerateDescendant = new PButton(nightMode);
         btnOK = new PButton(nightMode);
 
         setTitle("Etymology Setup and Graphical Tree");
         setMinimumSize(new java.awt.Dimension(0, 425));
 
-        lblWord.setBackground(new java.awt.Color(255, 255, 255));
+        lblWord.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         lblWord.setMaximumSize(new java.awt.Dimension(0, 20));
 
         jLabel1.setText("Etymology for:");
         jLabel1.setPreferredSize(new java.awt.Dimension(92, 1));
 
-        jSplitPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jSplitPane1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jSplitPane1.setDividerLocation(225);
         jSplitPane1.setPreferredSize(new java.awt.Dimension(9999, 9999));
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         txtEtyFamily.setColumns(20);
         txtEtyFamily.setRows(5);
@@ -427,19 +468,19 @@ public final class ScrEtymRoots extends PDialog {
 
         jSplitPane1.setRightComponent(jPanel1);
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         txtNotes.setPreferredSize(new java.awt.Dimension(0, 200));
         jScrollPane2.setViewportView(txtNotes);
 
-        jSplitPane2.setBackground(new java.awt.Color(255, 255, 255));
+        jSplitPane2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jSplitPane2.setDividerLocation(183);
         jSplitPane2.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
         jLabel2.setText("Internal Parents");
         jLabel2.setToolTipText("Etymological parents internal to your language");
 
-        pnlParentsInt.setBackground(new java.awt.Color(255, 255, 255));
+        pnlParentsInt.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlParentsInt.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         pnlParentsInt.setMinimumSize(new java.awt.Dimension(100, 200));
 
@@ -476,7 +517,7 @@ public final class ScrEtymRoots extends PDialog {
         jLabel3.setText("External Parents");
         jLabel3.setToolTipText("Etymological parents external to your language");
 
-        pnlParentsExt.setBackground(new java.awt.Color(255, 255, 255));
+        pnlParentsExt.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlParentsExt.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         javax.swing.GroupLayout pnlParentsExtLayout = new javax.swing.GroupLayout(pnlParentsExt);
@@ -527,6 +568,14 @@ public final class ScrEtymRoots extends PDialog {
 
         jSplitPane1.setLeftComponent(jPanel2);
 
+        btnGenerateDescendant.setText("Generate Descendant...");
+        btnGenerateDescendant.setToolTipText("Generate this word from the linked parent language using the evolution profile.");
+        btnGenerateDescendant.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnGenerateDescendantActionPerformed(evt);
+            }
+        });
+
         btnOK.setText("OK");
         btnOK.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -543,7 +592,8 @@ public final class ScrEtymRoots extends PDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnGenerateDescendant)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnOK))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -560,7 +610,9 @@ public final class ScrEtymRoots extends PDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 467, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnOK))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnGenerateDescendant)
+                    .addComponent(btnOK)))
         );
 
         pack();
@@ -569,6 +621,13 @@ public final class ScrEtymRoots extends PDialog {
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
         dispose();
     }//GEN-LAST:event_btnOKActionPerformed
+
+    private void btnGenerateDescendantActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGenerateDescendantActionPerformed
+        new ScrGenerateDescendant(core, word).setVisible(true);
+        lblWord.setText(word.getValue());
+        setupDrawPanel();
+        setupParentsPanels();
+    }//GEN-LAST:event_btnGenerateDescendantActionPerformed
 
     @Override
     public void updateAllValues(DictCore _core) {
@@ -583,6 +642,7 @@ public final class ScrEtymRoots extends PDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnGenerateDescendant;
     private javax.swing.JButton btnOK;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

@@ -254,7 +254,7 @@ public class ScrPrintToPDF extends PDialog {
         setTitle("PDF Print Options");
         setMinimumSize(new java.awt.Dimension(475, 685));
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
         txtSavePath.setEditable(false);
@@ -281,7 +281,7 @@ public class ScrPrintToPDF extends PDialog {
 
         jLabel4.setText("Print Options");
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         chkLocalCon.setSelected(true);

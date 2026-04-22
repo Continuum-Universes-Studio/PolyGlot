@@ -316,7 +316,7 @@ public final class ScrQuizScreen extends PFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("PolyGlot Quiz");
 
-        pnlChoices.setBackground(new java.awt.Color(255, 255, 255));
+        pnlChoices.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         pnlChoices.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
         pnlChoices.setAutoscrolls(true);
         pnlChoices.setMinimumSize(new java.awt.Dimension(10, 10));
@@ -333,11 +333,11 @@ public final class ScrQuizScreen extends PFrame {
             .addGap(0, 53, Short.MAX_VALUE)
         );
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jPanel2.setMinimumSize(new java.awt.Dimension(10, 10));
 
-        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel3.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);

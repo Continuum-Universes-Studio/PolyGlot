@@ -21,6 +21,7 @@ package org.darisadesigns.polyglotlina.ManagersCollections;
 
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.Nodes.DescendantLink;
 import org.darisadesigns.polyglotlina.Nodes.EtyExternalParent;
 import org.darisadesigns.polyglotlina.PGTUtil;
 import java.util.ArrayList;
@@ -252,6 +253,93 @@ public class EtymologyManager {
                 myMap.remove(parent.getUniqueId());
             }
         }
+    }
+
+    /**
+     * Replaces one external relation with another for the same child.
+     *
+     * @param oldParent current parent to remove
+     * @param newParent replacement parent to add
+     * @param child child word id
+     */
+    public void replaceExternalRelation(EtyExternalParent oldParent, EtyExternalParent newParent,
+            Integer child) {
+        if (oldParent == null || newParent == null) {
+            return;
+        }
+
+        delExternalRelation(oldParent, child);
+        addExternalRelation(newParent, child);
+    }
+
+    /**
+     * Replaces the descendant link for a word and mirrors it into the existing
+     * external etymology graph.
+     *
+     * @param child child word to update
+     * @param link new descendant link snapshot
+     */
+    public void setDescendantLink(ConWord child, DescendantLink link) {
+        if (child == null) {
+            return;
+        }
+
+        removeDescendantLink(child);
+        child.setDescendantLink(link);
+
+        if (link != null && !link.isEmpty()) {
+            addExternalRelation(descendantToExternalParent(link), child.getId());
+        }
+    }
+
+    /**
+     * Removes descendant-link metadata and any mirrored external parent.
+     *
+     * @param child child word to clear
+     */
+    public void removeDescendantLink(ConWord child) {
+        if (child == null) {
+            return;
+        }
+
+        DescendantLink currentLink = child.getDescendantLink();
+        if (currentLink != null && !currentLink.isEmpty()) {
+            delExternalRelation(descendantToExternalParent(currentLink), child.getId());
+        }
+
+        child.clearDescendantLink();
+    }
+
+    /**
+     * Checks whether an external parent is the mirrored etymology node for the
+     * child's descendant link.
+     *
+     * @param child child word to inspect
+     * @param parent external parent candidate
+     * @return true if this external parent mirrors the descendant link
+     */
+    public boolean isMirroredDescendantParent(ConWord child, EtyExternalParent parent) {
+        if (child == null || parent == null) {
+            return false;
+        }
+
+        DescendantLink link = child.getDescendantLink();
+        if (link == null || link.isEmpty()) {
+            return false;
+        }
+
+        return Objects.equals(link.getParentWordValue(), parent.getValue())
+                && Objects.equals(link.getParentWordDefinition(), parent.getDefinition())
+                && Objects.equals(link.getParentLanguageName(), parent.getExternalLanguage());
+    }
+
+    private EtyExternalParent descendantToExternalParent(DescendantLink link) {
+        EtyExternalParent parent = new EtyExternalParent();
+        parent.setValue(link.getParentWordValue());
+        parent.setDefinition(link.getParentWordDefinition());
+        parent.setExternalLanguage(link.getParentLanguageName());
+
+        return parent;
     }
     
     /**

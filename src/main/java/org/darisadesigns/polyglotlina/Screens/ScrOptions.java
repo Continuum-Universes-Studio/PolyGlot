@@ -85,12 +85,14 @@ public final class ScrOptions extends PDialog {
             DesktopOptionsManager options = PolyGlot.getPolyGlot().getOptionsManager();
             
             double scalingOriginal = options.getUiScale();
+            boolean nightModeOriginal = options.isNightMode();
             int maxReversion = Integer.parseInt(txtRevisionNumbers.getText());
             maxReversion = maxReversion > -1 ? maxReversion : 1;
             int autoSaveInteral = (int) 
                     (Float.parseFloat(txtAutoSave.getText()) * 60000); // multiply to get val in MS
             
             options.setAnimateWindows(chkResize.isSelected());
+            options.setNightMode(chkNightMode.isSelected());
             options.setMaxReversionCount(maxReversion);
             options.setMsBetweenSaves(autoSaveInteral);
             options.setUiScale(sldUiScaling.getValue() / 10.0);
@@ -103,6 +105,10 @@ public final class ScrOptions extends PDialog {
             }
             
             super.dispose();
+
+            if (nightModeOriginal != chkNightMode.isSelected()) {
+                PolyGlot.getPolyGlot().refreshUiDefaults();
+            }
         }
     }
 
@@ -134,6 +140,7 @@ public final class ScrOptions extends PDialog {
 
         jPanel1 = new javax.swing.JPanel();
         chkResize = new PCheckBox(nightMode);
+        chkNightMode = new PCheckBox(nightMode);
         jLabel2 = new PLabel("");
         txtRevisionNumbers = new javax.swing.JTextField();
         btnResetOptions = new PButton();
@@ -147,15 +154,22 @@ public final class ScrOptions extends PDialog {
         btnOk = new PButton();
 
         setTitle("PolyGlot Options");
-        setBackground(new java.awt.Color(255, 255, 255));
-        setMinimumSize(new java.awt.Dimension(319, 330));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
+        setMinimumSize(new java.awt.Dimension(319, 355));
         setModal(true);
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(
+        javax.swing.UIManager.getColor("Separator.foreground") != null
+                ? javax.swing.UIManager.getColor("Separator.foreground")
+                : javax.swing.UIManager.getColor("Label.foreground")
+));
 
         chkResize.setText("Auto Resize Window");
         chkResize.setToolTipText("Resize window to last size of given module automatically");
+
+        chkNightMode.setText("Night Mode");
+        chkNightMode.setToolTipText("Use the dark UI theme across PolyGlot");
 
         jLabel2.setText("Revision States Saved");
         jLabel2.setToolTipText("The max number of prior versions to save in your PGD files. 0 is unlimited (can lead to large files ).");
@@ -200,6 +214,7 @@ public final class ScrOptions extends PDialog {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(sldUiScaling, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 238, Short.MAX_VALUE)
                             .addComponent(chkResize, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(chkNightMode, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lblUiScaling, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -227,6 +242,8 @@ public final class ScrOptions extends PDialog {
                 .addContainerGap()
                 .addComponent(chkResize)
                 .addGap(5, 5, 5)
+                .addComponent(chkNightMode)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(txtRevisionNumbers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -271,6 +288,27 @@ public final class ScrOptions extends PDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnOk))
         );
+        java.awt.Color panelBg = javax.swing.UIManager.getColor("Panel.background");
+        java.awt.Color labelFg = javax.swing.UIManager.getColor("Label.foreground");
+        java.awt.Color fieldBg = javax.swing.UIManager.getColor("TextField.background");
+        java.awt.Color fieldFg = javax.swing.UIManager.getColor("TextField.foreground");
+
+        jPanel1.setBackground(panelBg);
+        getContentPane().setBackground(panelBg);
+
+        txtRevisionNumbers.setBackground(fieldBg);
+        txtRevisionNumbers.setForeground(fieldFg);
+
+        txtAutoSave.setBackground(fieldBg);
+        txtAutoSave.setForeground(fieldFg);
+
+        txtGptApiKey.setBackground(fieldBg);
+        txtGptApiKey.setForeground(fieldFg);
+
+        jLabel1.setForeground(labelFg);
+        jLabel2.setForeground(labelFg);
+        jLabel3.setForeground(labelFg);
+        lblUiScaling.setForeground(labelFg);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOkActionPerformed
@@ -288,6 +326,7 @@ public final class ScrOptions extends PDialog {
         DesktopOptionsManager mgr = PolyGlot.getPolyGlot().getOptionsManager();
         
         chkResize.setSelected(mgr.isAnimateWindows());
+        chkNightMode.setSelected(mgr.isNightMode());
         txtRevisionNumbers.setText(Integer.toString(mgr.getMaxReversionCount()));
         txtAutoSave.setText(Float.toString(mgr.getMsBetweenSaves()/60000.0f));
         sldUiScaling.setValue((int)(mgr.getUiScale() * 10));
@@ -297,6 +336,7 @@ public final class ScrOptions extends PDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnOk;
     private javax.swing.JButton btnResetOptions;
+    private javax.swing.JCheckBox chkNightMode;
     private javax.swing.JCheckBox chkResize;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

@@ -48,6 +48,7 @@ public class ConWord extends DictNode {
     protected String definition;
     private String pronunciation;
     private String etymNotes;
+    private DescendantLink descendantLink;
     private boolean procOverride;
     private boolean autoConjugationOverride;
     private boolean rulesOverride;
@@ -68,6 +69,7 @@ public class ConWord extends DictNode {
         autoConjugationOverride = false;
         rulesOverride = false;
         etymNotes = "";
+        descendantLink = new DescendantLink();
     }
     
     /**
@@ -230,6 +232,7 @@ public class ConWord extends DictNode {
         this.autoConjugationOverride = set.autoConjugationOverride;
         this.etymNotes = set.etymNotes;
         this.rulesOverride = set.rulesOverride;
+        this.descendantLink = new DescendantLink(set.descendantLink);
     }
 
     @Override
@@ -249,6 +252,7 @@ public class ConWord extends DictNode {
             ret = ret && procOverride == c.procOverride;
             ret = ret && autoConjugationOverride == c.autoConjugationOverride;
             ret = ret && rulesOverride == c.rulesOverride;
+            ret = ret && descendantLink.equals(c.descendantLink);
             ret = ret && classValues.equals(c.classValues);
             ret = ret && classTextValues.equals(c.classTextValues);
             
@@ -523,6 +527,18 @@ public class ConWord extends DictNode {
     public void setFilterEtyParent(Object _filterEtyParent) {
         this.filterEtyParent = _filterEtyParent;
     }
+
+    public DescendantLink getDescendantLink() {
+        return descendantLink;
+    }
+
+    public void setDescendantLink(DescendantLink descendantLink) {
+        this.descendantLink = descendantLink == null ? new DescendantLink() : new DescendantLink(descendantLink);
+    }
+
+    public void clearDescendantLink() {
+        descendantLink = new DescendantLink();
+    }
     
     public String getWordForm(String fullDecId) {
         String ret = "ERROR!";
@@ -610,6 +626,8 @@ public class ConWord extends DictNode {
         wordValue = doc.createElement(PGTUtil.WORD_ETY_NOTES_XID);
         wordValue.appendChild(doc.createTextNode(this.etymNotes));
         wordNode.appendChild(wordValue);
+
+        descendantLink.writeXML(doc, wordNode);
 
         rootElement.appendChild(wordNode);
     }

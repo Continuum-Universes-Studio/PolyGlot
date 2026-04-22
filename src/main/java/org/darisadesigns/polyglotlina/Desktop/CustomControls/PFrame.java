@@ -50,6 +50,7 @@ import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
 
 /**
  * superclass for JFrame windows in PolyGlot. Includes setup instructions for
@@ -296,7 +297,9 @@ public abstract class PFrame extends JFrame implements FocusListener {
                 }
             }
 
-            super.getRootPane().getContentPane().setBackground(Color.white);
+            super.getRootPane().getContentPane().setBackground(
+                    VisualStyleManager.getPanelBGColor(nightMode));
+            VisualStyleManager.applyTheme(super.getRootPane(), nightMode);
             firstVisible = false;
         }
 

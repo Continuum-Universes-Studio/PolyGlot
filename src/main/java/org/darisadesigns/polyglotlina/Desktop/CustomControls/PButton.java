@@ -20,6 +20,8 @@
 package org.darisadesigns.polyglotlina.Desktop.CustomControls;
 
 import org.darisadesigns.polyglotlina.Desktop.PGTUtil;
+import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.VisualStyleManager;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -41,17 +43,20 @@ public class PButton extends JButton implements MouseListener {
     private boolean mousePressed = false;
     private boolean activeSelected = false;
     private FontMetrics fontMetrics = null;
+    private final boolean nightMode;
     Rectangle2D textRectangle;
     int stringW;
     int stringH;
-    
+
     public PButton() {
-        super();
-        setupListeners();
+        this(PolyGlot.getPolyGlot() != null
+                && PolyGlot.getPolyGlot().getOptionsManager().isNightMode());
     }
-    
+
     public PButton(boolean nightModee) { // nightmode included for future progress
-        super.setFont(PGTUtil.MENU_FONT.deriveFont(PGTUtil.DEFAULT_FONT_SIZE.floatValue()));        
+        nightMode = nightModee;
+        super.setFont(PGTUtil.MENU_FONT.deriveFont(PGTUtil.DEFAULT_FONT_SIZE.floatValue()));
+        super.setForeground(VisualStyleManager.getTextColor(nightMode));
         setupListeners();
     }
     
@@ -94,8 +99,12 @@ public class PButton extends JButton implements MouseListener {
         final int thisWidth = this.getWidth();
         
         if (!enabled) {
-            bgColor = PGTUtil.COLOR_DISABLED_BG;
-            fontColor = PGTUtil.COLOR_DISABLED_FOREGROUND;
+            bgColor = nightMode
+                    ? VisualStyleManager.getControlBGColor(true)
+                    : PGTUtil.COLOR_DISABLED_BG;
+            fontColor = nightMode
+                    ? VisualStyleManager.getDisabledTextColor(true)
+                    : PGTUtil.COLOR_DISABLED_FOREGROUND;
         } else if (mousePressed && mouseEntered) {
             bgColor = PGTUtil.COLOR_SELECTED_BG;
             fontColor = getForeground();
@@ -103,9 +112,9 @@ public class PButton extends JButton implements MouseListener {
             bgColor = PGTUtil.COLOR_ENABLED_BG;
             fontColor = getForeground();
         }
-        
+
         if (activeSelected) {
-            g.setColor(Color.black);
+            g.setColor(VisualStyleManager.getBorderColor(nightMode));
             g.fillRect(0, 0, getWidth(), getHeight());
         }
 
@@ -115,7 +124,9 @@ public class PButton extends JButton implements MouseListener {
 
         // draw black border on mouseover if button enabled
         if (mouseEntered && enabled) {
-            g.setColor(PGTUtil.COLOR_MOUSEOVER_BORDER);
+            g.setColor(nightMode
+                    ? VisualStyleManager.getBorderColor(true)
+                    : PGTUtil.COLOR_MOUSEOVER_BORDER);
             g.drawRect(1, 1, thisWidth - 3, thisHeight - 3);
         }
         

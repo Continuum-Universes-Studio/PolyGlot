@@ -85,6 +85,11 @@ public class PGTUtil {
     public static final String WORD_CLASS_TEXT_VAL_COLLECTION_XID = "wordClassTextValueCollection";
     public static final String WORD_CLASS_TEXT_VAL_XID = "wordClassTextValue";
     public static final String WORD_ETY_NOTES_XID = "wordEtymologyNotes";
+    public static final String WORD_DESCENDANT_LINK_XID = "wordDescendantLink";
+    public static final String WORD_DESCENDANT_PARENT_ID_XID = "wordDescendantParentId";
+    public static final String WORD_DESCENDANT_PARENT_VALUE_XID = "wordDescendantParentValue";
+    public static final String WORD_DESCENDANT_PARENT_DEFINITION_XID = "wordDescendantParentDefinition";
+    public static final String WORD_DESCENDANT_PARENT_LANGUAGE_XID = "wordDescendantParentLanguage";
     
 
     // properties for types/parts of speech
@@ -137,6 +142,23 @@ public class PGTUtil {
     public static final String LANG_PROP_ZOMPIST_MONOSYLLABLE_FREQUENCY = "zompistMonosyllableFrequency";
     public static final String LANG_PROP_KERNING_DEPRECATED = "langPropKerningValue";
     public static final String LANG_PROP_ENFORCE_RTL_XID_DEPRECATED = "langPropEnforceRTL";
+    public static final String LANG_PROP_LINKED_LANGUAGES_XID = "linkedLanguages";
+    public static final String LANG_PROP_LINKED_LANGUAGE_XID = "linkedLanguage";
+    public static final String LANG_PROP_LINKED_LANGUAGE_TARGET_FILE_XID = "linkedLanguageTargetFile";
+    public static final String LANG_PROP_LINKED_LANGUAGE_NAME_XID = "linkedLanguageName";
+    public static final String LANG_PROP_LINKED_LANGUAGE_TYPE_XID = "linkedLanguageType";
+    public static final String LANG_PROP_LINKED_LANGUAGE_NOTES_XID = "linkedLanguageNotes";
+    public static final String LANG_PROP_EVOLUTION_PROFILE_XID = "languageEvolutionProfile";
+    public static final String LANG_PROP_EVOLUTION_PARENT_PATH_XID = "languageEvolutionParentPath";
+    public static final String LANG_PROP_EVOLUTION_PARENT_NAME_XID = "languageEvolutionParentName";
+    public static final String LANG_PROP_EVOLUTION_RULES_XID = "languageEvolutionRules";
+    public static final String LANG_PROP_EVOLUTION_RULE_XID = "languageEvolutionRule";
+    public static final String LANG_PROP_EVOLUTION_RELATIONS_XID = "languageEvolutionRelations";
+    public static final String LANG_PROP_EVOLUTION_RELATION_XID = "languageEvolutionRelation";
+    public static final String LANG_PROP_EVOLUTION_RELATION_PATH_XID = "languageEvolutionRelationPath";
+    public static final String LANG_PROP_EVOLUTION_RELATION_NAME_XID = "languageEvolutionRelationName";
+    public static final String LANG_PROP_EVOLUTION_RELATION_TYPE_XID = "languageEvolutionRelationType";
+    public static final String LANG_PROP_EVOLUTION_RELATION_NOTES_XID = "languageEvolutionRelationNotes";
 
     // character replacement pair values
     public static final String LANG_PROP_CHAR_REP_CONTAINER_XID = "langPropCharRep";
@@ -198,6 +220,23 @@ public class PGTUtil {
     public static final String DEC_GEN_RULE_INDEX_XID = "decGenRuleIndex";
     public static final String DEC_GEN_RULE_APPLY_TO_CLASSES_XID = "decGenRuleApplyToClasses";
     public static final String DEC_GEN_RULE_APPLY_TO_CLASS_VALUE_XID = "decGenRuleApplyToClassValue";
+
+    // morphology rule properties
+    public static final String MORPH_RULE_XID = "morphologyRule";
+    public static final String MORPH_RULE_ID_XID = "morphologyRuleId";
+    public static final String MORPH_RULE_TYPE_XID = "morphologyRuleTypeId";
+    public static final String MORPH_RULE_TARGET_XID = "morphologyRuleTarget";
+    public static final String MORPH_RULE_NAME_XID = "morphologyRuleName";
+    public static final String MORPH_RULE_ENABLED_XID = "morphologyRuleEnabled";
+    public static final String MORPH_RULE_ORDER_XID = "morphologyRuleOrder";
+    public static final String MORPH_RULE_OPERATION_XID = "morphologyRuleOperation";
+    public static final String MORPH_RULE_VALUE_1_XID = "morphologyRuleValue1";
+    public static final String MORPH_RULE_VALUE_2_XID = "morphologyRuleValue2";
+    public static final String MORPH_RULE_NOTES_XID = "morphologyRuleNotes";
+    public static final String MORPH_CONDITION_XID = "morphologyCondition";
+    public static final String MORPH_CONDITION_FIELD_XID = "morphologyConditionField";
+    public static final String MORPH_CONDITION_OPERATOR_XID = "morphologyConditionOperator";
+    public static final String MORPH_CONDITION_VALUE_XID = "morphologyConditionValue";
 
     // autodeclension transform properties
     public static final String DEC_GEN_TRANS_XID = "decGenTrans";

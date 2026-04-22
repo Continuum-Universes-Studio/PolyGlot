@@ -109,13 +109,13 @@ public final class ScrIpaTranslator extends PDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("IPA Conversion Tool");
-        setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
-        jSplitPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jSplitPane1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jSplitPane1.setDividerLocation(200);
         jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         txtTarget.setEditable(false);
         txtTarget.setColumns(20);
@@ -138,7 +138,7 @@ public final class ScrIpaTranslator extends PDialog {
 
         jSplitPane1.setBottomComponent(jPanel1);
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
 
         jScrollPane2.setViewportView(txtSource);
 

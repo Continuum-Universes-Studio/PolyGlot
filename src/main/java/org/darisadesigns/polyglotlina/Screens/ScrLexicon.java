@@ -38,6 +38,7 @@ import org.darisadesigns.polyglotlina.Nodes.EtyExternalParent;
 import org.darisadesigns.polyglotlina.Nodes.TypeNode;
 import org.darisadesigns.polyglotlina.Nodes.WordClassValue;
 import org.darisadesigns.polyglotlina.Nodes.WordClass;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -55,6 +56,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -86,20 +90,34 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.InputMap;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
+import javax.xml.parsers.ParserConfigurationException;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PAddRemoveButton;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PButtonDropdown;
+import org.darisadesigns.polyglotlina.Desktop.CustomControls.PDialog;
+import org.darisadesigns.polyglotlina.Desktop.CustomControls.PLabel;
 import org.darisadesigns.polyglotlina.Desktop.PGTUtil;
 import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
+import org.darisadesigns.polyglotlina.Desktop.CustomControls.PTable;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.DesktopGrammarManager;
 import org.darisadesigns.polyglotlina.Nodes.DictNode;
+import org.darisadesigns.polyglotlina.Nodes.LanguageLinkType;
+import org.darisadesigns.polyglotlina.Nodes.LinkedLanguage;
 
 /**
  *
@@ -130,6 +148,9 @@ public final class ScrLexicon extends PFrame {
     private Thread filterThread = null;
     private final ScrMainMenu menuParent;
     private final PTextField txtRom;
+    private final DefaultTableModel linkedLanguageModel;
+    private final PTable tblLinkedLanguages;
+    private final JTabbedPane tabLexiconArea;
     private boolean enableProcGen = true;
     private ScrWordFormConstructor formConstructor = null;
 
@@ -162,11 +183,232 @@ public final class ScrLexicon extends PFrame {
         fxPanel = new JFXPanel();
         txtRom = new PTextField(core, true, "Romanization");
         txtRom.setToolTipText("Romanized representation of word");
+        linkedLanguageModel = new DefaultTableModel(
+                new String[]{"Target File", "Language Name", "Link Type", "Notes"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        tblLinkedLanguages = new PTable(core);
+        tabLexiconArea = new JTabbedPane();
         initComponents();
+        setupLinkedLanguagesTab();
 
         lstLexicon.setModel(new PListModelLexicon());
 
         performLongRunningSetupTasks();
+    }
+
+    private void setupLinkedLanguagesTab() {
+        tblLinkedLanguages.setModel(linkedLanguageModel);
+        tblLinkedLanguages.setRowHeight(26);
+        tblLinkedLanguages.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tblLinkedLanguages.setFont(((DesktopPropertiesManager) core.getPropertiesManager()).getFontLocal());
+
+        tabLexiconArea.addTab("Lexicon", jPanel4);
+        tabLexiconArea.addTab("Linked Languages", buildLinkedLanguagesPanel());
+        jSplitPane1.setLeftComponent(tabLexiconArea);
+
+        refreshLinkedLanguagesTable();
+    }
+
+    private JPanel buildLinkedLanguagesPanel() {
+        JPanel linkedLanguagesPanel = new JPanel(new BorderLayout(6, 6));
+        linkedLanguagesPanel.add(new JScrollPane(tblLinkedLanguages), BorderLayout.CENTER);
+
+        JPanel buttonsPanel = new JPanel(new GridLayout(1, 3, 6, 6));
+        PButton btnAddLinkedLanguage = new PButton(nightMode);
+        btnAddLinkedLanguage.setText("Add");
+        btnAddLinkedLanguage.addActionListener((evt) -> addLinkedLanguage());
+
+        PButton btnEditLinkedLanguage = new PButton(nightMode);
+        btnEditLinkedLanguage.setText("Edit");
+        btnEditLinkedLanguage.addActionListener((evt) -> editLinkedLanguage());
+
+        PButton btnRemoveLinkedLanguage = new PButton(nightMode);
+        btnRemoveLinkedLanguage.setText("Remove");
+        btnRemoveLinkedLanguage.addActionListener((evt) -> removeLinkedLanguage());
+
+        buttonsPanel.add(btnAddLinkedLanguage);
+        buttonsPanel.add(btnEditLinkedLanguage);
+        buttonsPanel.add(btnRemoveLinkedLanguage);
+
+        linkedLanguagesPanel.add(buttonsPanel, BorderLayout.SOUTH);
+
+        return linkedLanguagesPanel;
+    }
+
+    private void refreshLinkedLanguagesTable() {
+        linkedLanguageModel.setRowCount(0);
+
+        for (LinkedLanguage linkedLanguage : core.getPropertiesManager().getLinkedLanguages()) {
+            linkedLanguageModel.addRow(new Object[]{
+                linkedLanguage.getTargetFile(),
+                linkedLanguage.getLanguageName(),
+                linkedLanguage.getLinkType(),
+                linkedLanguage.getNotes()
+            });
+        }
+    }
+
+    private void addLinkedLanguage() {
+        LinkedLanguageEditorDialog dialog = new LinkedLanguageEditorDialog(null);
+        dialog.setVisible(true);
+
+        LinkedLanguage linkedLanguage = dialog.getLinkedLanguage();
+        if (linkedLanguage != null) {
+            if (hasLinkedLanguageTargetDuplicate(linkedLanguage, -1)) {
+                new DesktopInfoBox(this).warning("Duplicate Linked Language",
+                        "A linked language for that target file already exists.");
+                return;
+            }
+
+            core.getPropertiesManager().addLinkedLanguage(linkedLanguage);
+            refreshLinkedLanguagesTable();
+            selectLinkedLanguageRow(linkedLanguageModel.getRowCount() - 1);
+        }
+    }
+
+    private void editLinkedLanguage() {
+        int selectedRow = tblLinkedLanguages.getSelectedRow();
+
+        if (selectedRow < 0) {
+            return;
+        }
+
+        LinkedLanguage linkedLanguage = core.getPropertiesManager().getLinkedLanguage(selectedRow);
+        LinkedLanguageEditorDialog dialog = new LinkedLanguageEditorDialog(linkedLanguage);
+        dialog.setVisible(true);
+
+        LinkedLanguage updatedLinkedLanguage = dialog.getLinkedLanguage();
+        if (updatedLinkedLanguage != null) {
+            if (hasLinkedLanguageTargetDuplicate(updatedLinkedLanguage, selectedRow)) {
+                new DesktopInfoBox(this).warning("Duplicate Linked Language",
+                        "A linked language for that target file already exists.");
+                return;
+            }
+
+            core.getPropertiesManager().setLinkedLanguage(selectedRow, updatedLinkedLanguage);
+            refreshLinkedLanguagesTable();
+            selectLinkedLanguageRow(selectedRow);
+        }
+    }
+
+    private void removeLinkedLanguage() {
+        int selectedRow = tblLinkedLanguages.getSelectedRow();
+
+        if (selectedRow < 0) {
+            return;
+        }
+
+        core.getPropertiesManager().removeLinkedLanguage(selectedRow);
+        refreshLinkedLanguagesTable();
+        selectLinkedLanguageRow(Math.min(selectedRow, linkedLanguageModel.getRowCount() - 1));
+    }
+
+    private void selectLinkedLanguageRow(int row) {
+        if (row > -1 && row < linkedLanguageModel.getRowCount()) {
+            tblLinkedLanguages.changeSelection(row, 0, false, false);
+        }
+    }
+
+    private boolean hasLinkedLanguageTargetDuplicate(LinkedLanguage candidate, int ignoreIndex) {
+        String candidateTarget = normalizeLinkedLanguageTarget(candidate);
+
+        if (candidateTarget.isBlank()) {
+            return false;
+        }
+
+        var linkedLanguages = core.getPropertiesManager().getLinkedLanguages();
+        for (int i = 0; i < linkedLanguages.size(); i++) {
+            if (i == ignoreIndex) {
+                continue;
+            }
+
+            if (candidateTarget.equals(normalizeLinkedLanguageTarget(linkedLanguages.get(i)))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private String normalizeLinkedLanguageTarget(LinkedLanguage linkedLanguage) {
+        if (linkedLanguage == null) {
+            return "";
+        }
+
+        String normalizedTarget = linkedLanguage.getResolvedTargetFile(core);
+        if (normalizedTarget.isBlank()) {
+            normalizedTarget = linkedLanguage.getTargetFile();
+        }
+
+        if (normalizedTarget.isBlank()) {
+            return "";
+        }
+
+        try {
+            normalizedTarget = Paths.get(normalizedTarget).normalize().toString();
+        } catch (Exception e) {
+            normalizedTarget = normalizedTarget.trim();
+        }
+
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            normalizedTarget = normalizedTarget.toLowerCase();
+        }
+
+        return normalizedTarget;
+    }
+
+    private JFileChooser buildLanguageChooser(String initialPath) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileFilter(new FileNameExtensionFilter(
+                "PolyGlot Languages", org.darisadesigns.polyglotlina.PGTUtil.POLYGLOT_FILE_SUFFIX));
+
+        File baseDirectory = null;
+        if (initialPath != null && !initialPath.isBlank()) {
+            File initialFile = new File(initialPath);
+            baseDirectory = initialFile.isDirectory() ? initialFile : initialFile.getParentFile();
+        } else if (!core.getCurFileName().isBlank()) {
+            baseDirectory = DesktopIOHandler.getInstance().getDirectoryFromPath(core.getCurFileName());
+        }
+
+        if (baseDirectory != null && baseDirectory.exists()) {
+            chooser.setCurrentDirectory(baseDirectory);
+        }
+
+        return chooser;
+    }
+
+    private DictCore loadReadOnlyCore(String filePath)
+            throws IOException, ParserConfigurationException {
+        DictCore linkedCore = new DictCore(new DesktopPropertiesManager(),
+                core.getOSHandler(), new org.darisadesigns.polyglotlina.Desktop.PGTUtil(),
+                new DesktopGrammarManager());
+
+        try {
+            linkedCore.readFile(filePath);
+        } catch (IllegalStateException e) {
+            // Warnings do not invalidate the linked language for metadata display.
+        }
+
+        return linkedCore;
+    }
+
+    private String resolveLanguageDisplayName(DictCore languageCore, String filePath) {
+        String languageName = languageCore == null ? "" : languageCore.getPropertiesManager().getLangName();
+        if (!languageName.isBlank()) {
+            return languageName;
+        }
+
+        String fileName = new File(filePath).getName();
+        String suffix = "." + org.darisadesigns.polyglotlina.PGTUtil.POLYGLOT_FILE_SUFFIX;
+        if (fileName.endsWith(suffix)) {
+            fileName = fileName.substring(0, fileName.length() - suffix.length());
+        }
+
+        return fileName;
     }
     
     /**
@@ -266,6 +508,7 @@ public final class ScrLexicon extends PFrame {
             
             setupComboBoxesSwing();
             populateProperties();
+            refreshLinkedLanguagesTable();
                 
             Runnable fxSetup = () -> {
                 setupComboBoxesFX();
@@ -278,6 +521,7 @@ public final class ScrLexicon extends PFrame {
             Font localFont = ((DesktopPropertiesManager)core.getPropertiesManager()).getFontLocal();
             lstLexicon.setFont(core.getPropertiesManager().isUseLocalWordLex() ? localFont : conFont);
             cmbType.setFont(localFont);
+            tblLinkedLanguages.setFont(localFont);
             setupComboBoxesSwing();
             curPopulating = localPopulating;
             forceUpdate = false;
@@ -1727,6 +1971,128 @@ public final class ScrLexicon extends PFrame {
         return menu;
     }
 
+    private final class LinkedLanguageEditorDialog extends PDialog {
+        private final LinkedLanguage workingLinkedLanguage;
+        private final PTextField txtTargetFile;
+        private final PTextField txtLanguageName;
+        private final PComboBox<LanguageLinkType> cmbLinkType;
+        private final PTextField txtNotes;
+        private LinkedLanguage result = null;
+
+        private LinkedLanguageEditorDialog(LinkedLanguage linkedLanguage) {
+            super(ScrLexicon.this.core);
+            workingLinkedLanguage = linkedLanguage == null
+                    ? new LinkedLanguage() : new LinkedLanguage(linkedLanguage);
+            txtTargetFile = new PTextField(core, true, "Linked Language File");
+            txtLanguageName = new PTextField(core, true, "Language Name");
+            cmbLinkType = new PComboBox<>(
+                    ((DesktopPropertiesManager) core.getPropertiesManager()).getFontMenu(), core);
+            txtNotes = new PTextField(core, true, "Notes");
+
+            buildUi(linkedLanguage == null);
+            populateFromLinkedLanguage();
+            setModal(true);
+            pack();
+        }
+
+        private void buildUi(boolean adding) {
+            setTitle(adding ? "Add Linked Language" : "Edit Linked Language");
+            setMinimumSize(new Dimension(620, 260));
+            getContentPane().setLayout(new BorderLayout(8, 8));
+
+            txtTargetFile.setEditable(false);
+
+            DefaultComboBoxModel<LanguageLinkType> model = new DefaultComboBoxModel<>(
+                    LanguageLinkType.values());
+            cmbLinkType.setModel(model);
+
+            PButton btnChooseLanguage = new PButton(nightMode);
+            btnChooseLanguage.setText("Choose Linked Language...");
+            btnChooseLanguage.addActionListener((evt) -> chooseLinkedLanguage());
+
+            JPanel chooserPanel = new JPanel(new GridLayout(1, 1, 6, 6));
+            chooserPanel.add(btnChooseLanguage);
+
+            JPanel linkTypePanel = new JPanel(new BorderLayout(6, 6));
+            linkTypePanel.add(new PLabel("Link Type"), BorderLayout.WEST);
+            linkTypePanel.add(cmbLinkType, BorderLayout.CENTER);
+
+            JPanel fieldsPanel = new JPanel(new GridLayout(4, 1, 6, 6));
+            fieldsPanel.add(txtTargetFile);
+            fieldsPanel.add(txtLanguageName);
+            fieldsPanel.add(linkTypePanel);
+            fieldsPanel.add(txtNotes);
+
+            JPanel buttonsPanel = new JPanel(new GridLayout(1, 2, 6, 6));
+            PButton btnCancel = new PButton(nightMode);
+            btnCancel.setText("Cancel");
+            btnCancel.addActionListener((evt) -> dispose());
+
+            PButton btnOk = new PButton(nightMode);
+            btnOk.setText("OK");
+            btnOk.addActionListener((evt) -> saveAndClose());
+
+            buttonsPanel.add(btnCancel);
+            buttonsPanel.add(btnOk);
+
+            getContentPane().add(chooserPanel, BorderLayout.NORTH);
+            getContentPane().add(fieldsPanel, BorderLayout.CENTER);
+            getContentPane().add(buttonsPanel, BorderLayout.SOUTH);
+        }
+
+        private void populateFromLinkedLanguage() {
+            txtTargetFile.setText(workingLinkedLanguage.getTargetFile());
+            txtLanguageName.setText(workingLinkedLanguage.getLanguageName());
+            cmbLinkType.setSelectedItem(workingLinkedLanguage.getLinkType());
+            txtNotes.setText(workingLinkedLanguage.getNotes());
+        }
+
+        private void chooseLinkedLanguage() {
+            String existingPath = workingLinkedLanguage.getResolvedTargetFile(core);
+            JFileChooser chooser = buildLanguageChooser(existingPath);
+
+            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                String chosenPath = chooser.getSelectedFile().getAbsolutePath();
+
+                try {
+                    DictCore linkedCore = loadReadOnlyCore(chosenPath);
+                    workingLinkedLanguage.setTargetFileFromAbsolute(chosenPath, core);
+                    workingLinkedLanguage.setLanguageName(
+                            resolveLanguageDisplayName(linkedCore, chosenPath));
+                    populateFromLinkedLanguage();
+                } catch (Exception e) {
+                    DesktopIOHandler.getInstance().writeErrorLog(e);
+                    new DesktopInfoBox(this).error("Linked Language Error",
+                            "Unable to read selected linked language:\n" + e.getLocalizedMessage());
+                }
+            }
+        }
+
+        private void saveAndClose() {
+            workingLinkedLanguage.setLanguageName(txtLanguageName.getText());
+            workingLinkedLanguage.setLinkType((LanguageLinkType) cmbLinkType.getSelectedItem());
+            workingLinkedLanguage.setNotes(txtNotes.getText());
+
+            if (!workingLinkedLanguage.isValid()) {
+                new DesktopInfoBox(this).warning("Linked Language Error",
+                        "Select a linked language and provide a display name before saving.");
+                return;
+            }
+
+            result = new LinkedLanguage(workingLinkedLanguage);
+            dispose();
+        }
+
+        private LinkedLanguage getLinkedLanguage() {
+            return result;
+        }
+
+        @Override
+        public void updateAllValues(DictCore _core) {
+            // Modal dialog works on a local copy only.
+        }
+    }
+
     /**
      * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The
      * content of this method is always regenerated by the Form Editor.
@@ -1762,7 +2128,7 @@ public final class ScrLexicon extends PFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Lexicon");
-        setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(javax.swing.UIManager.getColor("Panel.background"));
         setEnabled(false);
         setMinimumSize(new java.awt.Dimension(500, 450));
         addWindowFocusListener(new java.awt.event.WindowFocusListener() {
@@ -1773,13 +2139,13 @@ public final class ScrLexicon extends PFrame {
             }
         });
 
-        jLayeredPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jLayeredPane1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jLayeredPane1.setMaximumSize(new java.awt.Dimension(4000, 4000));
         jLayeredPane1.setMinimumSize(new java.awt.Dimension(351, 350));
         jLayeredPane1.setName(""); // NOI18N
         jLayeredPane1.setPreferredSize(new java.awt.Dimension(351, 380));
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel1.setMaximumSize(new java.awt.Dimension(4000, 4000));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -1793,14 +2159,14 @@ public final class ScrLexicon extends PFrame {
             .addGap(0, 19, Short.MAX_VALUE)
         );
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel2.setMaximumSize(new java.awt.Dimension(4000, 4000));
 
-        jSplitPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jSplitPane1.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jSplitPane1.setDividerLocation(123);
         jSplitPane1.setMaximumSize(new java.awt.Dimension(4000, 4000));
 
-        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel3.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel3.setMaximumSize(new java.awt.Dimension(4000, 4000));
         jPanel3.setMinimumSize(new java.awt.Dimension(20, 20));
         jPanel3.setName(""); // NOI18N
@@ -1936,7 +2302,7 @@ public final class ScrLexicon extends PFrame {
 
         jSplitPane1.setRightComponent(jPanel3);
 
-        jPanel4.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel4.setBackground(javax.swing.UIManager.getColor("Panel.background"));
         jPanel4.setMaximumSize(new java.awt.Dimension(4000, 4000));
 
         jScrollPane3.setMaximumSize(new java.awt.Dimension(4000, 4000));
