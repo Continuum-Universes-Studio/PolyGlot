@@ -34,6 +34,7 @@ import org.darisadesigns.polyglotlina.PGTUtil;
 import org.darisadesigns.polyglotlina.RegexTools;
 import org.darisadesigns.polyglotlina.RegexTools.ReplaceOptions;
 import org.darisadesigns.polyglotlina.WebInterface;
+import org.darisadesigns.polyglotlina.Nodes.LinkedWordReference;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -49,6 +50,7 @@ public class ConWord extends DictNode {
     private String pronunciation;
     private String etymNotes;
     private DescendantLink descendantLink;
+    private LinkedWordReference linkedWordReference;
     private boolean procOverride;
     private boolean autoConjugationOverride;
     private boolean rulesOverride;
@@ -70,6 +72,7 @@ public class ConWord extends DictNode {
         rulesOverride = false;
         etymNotes = "";
         descendantLink = new DescendantLink();
+        linkedWordReference = new LinkedWordReference();
     }
     
     /**
@@ -233,6 +236,7 @@ public class ConWord extends DictNode {
         this.etymNotes = set.etymNotes;
         this.rulesOverride = set.rulesOverride;
         this.descendantLink = new DescendantLink(set.descendantLink);
+        this.linkedWordReference = new LinkedWordReference(set.linkedWordReference);
     }
 
     @Override
@@ -255,6 +259,7 @@ public class ConWord extends DictNode {
             ret = ret && descendantLink.equals(c.descendantLink);
             ret = ret && classValues.equals(c.classValues);
             ret = ret && classTextValues.equals(c.classTextValues);
+            ret = ret && linkedWordReference.equals(c.linkedWordReference);
             
             if (procOverride) {
                 ret = ret && pronunciation.replaceAll("\\s", "").equals(c.pronunciation.replaceAll("\\s", ""));
@@ -279,8 +284,8 @@ public class ConWord extends DictNode {
     }
 
     public void setCore(DictCore _core) {
-        if (core != null) {
-            parentCollection = core.getWordCollection();
+        if (_core != null) {
+            parentCollection = _core.getWordCollection();
         } else {
             parentCollection = null;
         }
@@ -539,6 +544,19 @@ public class ConWord extends DictNode {
     public void clearDescendantLink() {
         descendantLink = new DescendantLink();
     }
+
+    public LinkedWordReference getLinkedWordReference() {
+        return linkedWordReference;
+    }
+
+    public void setLinkedWordReference(LinkedWordReference linkedWordReference) {
+        this.linkedWordReference = linkedWordReference == null
+                ? new LinkedWordReference() : new LinkedWordReference(linkedWordReference);
+    }
+
+    public void clearLinkedWordReference() {
+        linkedWordReference = new LinkedWordReference();
+    }
     
     public String getWordForm(String fullDecId) {
         String ret = "ERROR!";
@@ -628,6 +646,7 @@ public class ConWord extends DictNode {
         wordNode.appendChild(wordValue);
 
         descendantLink.writeXML(doc, wordNode);
+        linkedWordReference.writeXML(doc, wordNode);
 
         rootElement.appendChild(wordNode);
     }

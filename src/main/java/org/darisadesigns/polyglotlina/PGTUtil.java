@@ -90,6 +90,14 @@ public class PGTUtil {
     public static final String WORD_DESCENDANT_PARENT_VALUE_XID = "wordDescendantParentValue";
     public static final String WORD_DESCENDANT_PARENT_DEFINITION_XID = "wordDescendantParentDefinition";
     public static final String WORD_DESCENDANT_PARENT_LANGUAGE_XID = "wordDescendantParentLanguage";
+    public static final String WORD_LINK_REFERENCE_XID = "wordLinkedReference";
+    public static final String WORD_LINK_LANGUAGE_PATH_XID = "wordLinkedLanguagePath";
+    public static final String WORD_LINK_LANGUAGE_NAME_XID = "wordLinkedLanguageName";
+    public static final String WORD_LINK_WORD_ID_XID = "wordLinkedWordId";
+    public static final String WORD_LINK_WORD_VALUE_XID = "wordLinkedWordValue";
+    public static final String WORD_LINK_WORD_DEFINITION_XID = "wordLinkedWordDefinition";
+    public static final String WORD_LINK_RELATION_TYPE_XID = "wordLinkedRelationType";
+    public static final String WORD_LINK_NOTES_XID = "wordLinkedNotes";
     
 
     // properties for types/parts of speech

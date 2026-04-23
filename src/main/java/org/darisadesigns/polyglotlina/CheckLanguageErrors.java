@@ -33,6 +33,8 @@ import org.darisadesigns.polyglotlina.Nodes.LexiconProblemNode;
 import org.darisadesigns.polyglotlina.Nodes.LexiconProblemNode.ProblemType;
 import org.darisadesigns.polyglotlina.Nodes.PronunciationNode;
 import org.darisadesigns.polyglotlina.Nodes.TypeNode;
+import org.darisadesigns.polyglotlina.Validation.ConsistencyChecker;
+import org.darisadesigns.polyglotlina.Validation.ConsistencyIssue;
 
 /**
  * This checks a given language file for correctable errors
@@ -72,6 +74,11 @@ public class CheckLanguageErrors {
                     
                     // Check Alphabet
                     checkAlphabet(core, problems);
+
+                    // Run modular consistency validation framework.
+                    for (ConsistencyIssue issue : new ConsistencyChecker().check(core)) {
+                        problems.add(issue.toLegacyNode());
+                    }
                 }
             };
 

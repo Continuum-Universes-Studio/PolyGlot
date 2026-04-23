@@ -37,9 +37,11 @@ import org.darisadesigns.polyglotlina.Desktop.CustomControls.PTextPane;
 import org.darisadesigns.polyglotlina.ManagersCollections.ConWordCollection.ConWordDisplay;
 import org.darisadesigns.polyglotlina.Nodes.DisplayMode;
 import org.darisadesigns.polyglotlina.Nodes.EtyExternalParent;
+import org.darisadesigns.polyglotlina.Nodes.LexicalRelationType;
 import org.darisadesigns.polyglotlina.Nodes.TypeNode;
 import org.darisadesigns.polyglotlina.Nodes.WordClassValue;
 import org.darisadesigns.polyglotlina.Nodes.WordClass;
+import org.darisadesigns.polyglotlina.Nodes.LinkedWordReference;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -65,6 +67,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
@@ -89,7 +92,10 @@ import javafx.scene.layout.GridPane;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.InputMap;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -155,8 +161,16 @@ public final class ScrLexicon extends PFrame {
     private final DefaultTableModel linkedLanguageModel;
     private final PTable tblLinkedLanguages;
     private final JTabbedPane tabLexiconArea;
+    private final Map<String, DictCore> linkedLanguageCoreCache = new HashMap<>();
+    private boolean linkedWordPopulating = false;
     private boolean enableProcGen = true;
     private ScrWordFormConstructor formConstructor = null;
+    private JCheckBox chkLinkedWord;
+    private PComboBox<LinkedLanguage> cmbLinkedLanguage;
+    private PComboBox<ConWord> cmbLinkedWord;
+    private PComboBox<LexicalRelationType> cmbLinkedRelation;
+    private PTextField txtLinkedWordSearch;
+    private JPanel pnlLinkedWord;
 
     /**
      * Creates new form scrLexicon
@@ -271,6 +285,8 @@ public final class ScrLexicon extends PFrame {
 
             core.getPropertiesManager().addLinkedLanguage(linkedLanguage);
             refreshLinkedLanguagesTable();
+            refreshLinkedLanguageChoices();
+            refreshLinkedWordChoices();
             selectLinkedLanguageRow(linkedLanguageModel.getRowCount() - 1);
         }
     }
@@ -296,6 +312,8 @@ public final class ScrLexicon extends PFrame {
 
             core.getPropertiesManager().setLinkedLanguage(selectedRow, updatedLinkedLanguage);
             refreshLinkedLanguagesTable();
+            refreshLinkedLanguageChoices();
+            refreshLinkedWordChoices();
             selectLinkedLanguageRow(selectedRow);
         }
     }
@@ -309,6 +327,8 @@ public final class ScrLexicon extends PFrame {
 
         core.getPropertiesManager().removeLinkedLanguage(selectedRow);
         refreshLinkedLanguagesTable();
+        refreshLinkedLanguageChoices();
+        refreshLinkedWordChoices();
         selectLinkedLanguageRow(Math.min(selectedRow, linkedLanguageModel.getRowCount() - 1));
     }
 
@@ -415,6 +435,392 @@ public final class ScrLexicon extends PFrame {
 
         return fileName;
     }
+
+    private JPanel buildLinkedWordPanel() {
+        pnlLinkedWord = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.insets = new java.awt.Insets(2, 0, 2, 0);
+
+        chkLinkedWord = new JCheckBox("Linked word");
+        chkLinkedWord.setFont(((DesktopPropertiesManager) core.getPropertiesManager()).getFontLocal());
+        chkLinkedWord.setToolTipText("Enable a linked language reference for this lexicon entry.");
+        chkLinkedWord.addActionListener(evt -> {
+            if (linkedWordPopulating) {
+                return;
+            }
+
+            boolean enable = chkLinkedWord.isSelected();
+            setLinkedWordControlsEnabled(enable);
+            if (enable) {
+                if (cmbLinkedLanguage.getItemCount() > 0 && cmbLinkedLanguage.getSelectedItem() == null) {
+                    cmbLinkedLanguage.setSelectedIndex(0);
+                }
+                refreshLinkedWordChoices();
+            } else {
+                clearLinkedWordSelection();
+            }
+            ConWord curWord = getCurrentWord();
+            if (curWord != null) {
+                saveValuesTo(curWord);
+            }
+        });
+        pnlLinkedWord.add(chkLinkedWord, gbc);
+
+        gbc.gridy++;
+        cmbLinkedLanguage = new PComboBox<>(((DesktopPropertiesManager) core.getPropertiesManager()).getFontMenu(), core);
+        cmbLinkedLanguage.setToolTipText("Choose a linked language from this project.");
+        cmbLinkedLanguage.setRenderer(new LinkedLanguageRenderer());
+        cmbLinkedLanguage.addActionListener(evt -> {
+            if (linkedWordPopulating || !chkLinkedWord.isSelected()) {
+                return;
+            }
+
+            refreshLinkedWordChoices();
+            ConWord curWord = getCurrentWord();
+            if (curWord != null) {
+                saveValuesTo(curWord);
+            }
+        });
+        pnlLinkedWord.add(wrapLabeledControl("Linked language", cmbLinkedLanguage), gbc);
+
+        gbc.gridy++;
+        txtLinkedWordSearch = new PTextField(core, true, "Search linked word");
+        txtLinkedWordSearch.setToolTipText("Filter linked words by value, local word, or definition.");
+        txtLinkedWordSearch.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                refreshLinkedWordChoices();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                refreshLinkedWordChoices();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                refreshLinkedWordChoices();
+            }
+        });
+        pnlLinkedWord.add(wrapLabeledControl("Search", txtLinkedWordSearch), gbc);
+
+        gbc.gridy++;
+        cmbLinkedWord = new PComboBox<>(((DesktopPropertiesManager) core.getPropertiesManager()).getFontCon(), core);
+        cmbLinkedWord.setToolTipText("Select the linked source word.");
+        cmbLinkedWord.addActionListener(evt -> {
+            if (linkedWordPopulating || !chkLinkedWord.isSelected()) {
+                return;
+            }
+
+            ConWord curWord = getCurrentWord();
+            if (curWord != null) {
+                saveValuesTo(curWord);
+            }
+        });
+        pnlLinkedWord.add(wrapLabeledControl("Linked word", cmbLinkedWord), gbc);
+
+        gbc.gridy++;
+        cmbLinkedRelation = new PComboBox<>(((DesktopPropertiesManager) core.getPropertiesManager()).getFontMenu(), core);
+        cmbLinkedRelation.setToolTipText("Describe the relationship between this word and the linked source.");
+        cmbLinkedRelation.setModel(new DefaultComboBoxModel<>(LexicalRelationType.values()));
+        cmbLinkedRelation.setSelectedItem(LexicalRelationType.RELATED);
+        pnlLinkedWord.add(wrapLabeledControl("Relation", cmbLinkedRelation), gbc);
+
+        setLinkedWordControlsEnabled(false);
+        refreshLinkedLanguageChoices();
+        return pnlLinkedWord;
+    }
+
+    private JPanel wrapLabeledControl(String label, JComponent control) {
+        JPanel panel = new JPanel(new BorderLayout(6, 0));
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(((DesktopPropertiesManager) core.getPropertiesManager()).getFontLocal());
+        panel.add(lbl, BorderLayout.WEST);
+        panel.add(control, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void setLinkedWordControlsEnabled(boolean enable) {
+        if (cmbLinkedLanguage != null) {
+            cmbLinkedLanguage.setEnabled(enable);
+        }
+        if (txtLinkedWordSearch != null) {
+            txtLinkedWordSearch.setEnabled(enable);
+        }
+        if (cmbLinkedWord != null) {
+            cmbLinkedWord.setEnabled(enable);
+        }
+        if (cmbLinkedRelation != null) {
+            cmbLinkedRelation.setEnabled(enable);
+        }
+    }
+
+    private void clearLinkedWordSelection() {
+        boolean localPopulating = linkedWordPopulating;
+        linkedWordPopulating = true;
+        try {
+            if (cmbLinkedLanguage != null) {
+                cmbLinkedLanguage.setSelectedItem(null);
+            }
+            if (txtLinkedWordSearch != null) {
+                txtLinkedWordSearch.setText("");
+            }
+            if (cmbLinkedWord != null) {
+                cmbLinkedWord.removeAllItems();
+                cmbLinkedWord.setSelectedItem(null);
+            }
+            if (cmbLinkedRelation != null) {
+                cmbLinkedRelation.setSelectedItem(LexicalRelationType.RELATED);
+            }
+        } finally {
+            linkedWordPopulating = localPopulating;
+        }
+    }
+
+    private void refreshLinkedLanguageChoices() {
+        if (cmbLinkedLanguage == null) {
+            return;
+        }
+
+        linkedWordPopulating = true;
+        try {
+            LinkedLanguage selected = getSelectedLinkedLanguage();
+            String selectedPath = selected == null ? "" : normalizeLinkedLanguageTarget(selected);
+            cmbLinkedLanguage.removeAllItems();
+            for (LinkedLanguage linkedLanguage : core.getPropertiesManager().getLinkedLanguages()) {
+                cmbLinkedLanguage.addItem(linkedLanguage);
+            }
+
+            if (!selectedPath.isBlank()) {
+                LinkedLanguage match = findLinkedLanguageByPath(selectedPath);
+                cmbLinkedLanguage.setSelectedItem(match);
+            } else {
+                cmbLinkedLanguage.setSelectedItem(null);
+            }
+        } finally {
+            linkedWordPopulating = false;
+        }
+    }
+
+    private LinkedLanguage getSelectedLinkedLanguage() {
+        if (cmbLinkedLanguage == null) {
+            return null;
+        }
+
+        Object selectedItem = cmbLinkedLanguage.getSelectedItem();
+        return selectedItem instanceof LinkedLanguage linkedLanguage ? linkedLanguage : null;
+    }
+
+    private LinkedLanguage findLinkedLanguageByPath(String normalizedTarget) {
+        if (normalizedTarget == null || normalizedTarget.isBlank()) {
+            return null;
+        }
+
+        for (LinkedLanguage linkedLanguage : core.getPropertiesManager().getLinkedLanguages()) {
+            if (normalizedTarget.equals(normalizeLinkedLanguageTarget(linkedLanguage))) {
+                return linkedLanguage;
+            }
+        }
+
+        return null;
+    }
+
+    private String normalizeLinkedWordTarget(LinkedWordReference reference) {
+        if (reference == null) {
+            return "";
+        }
+
+        String normalizedTarget = reference.getResolvedTargetFile(core);
+        if (normalizedTarget.isBlank()) {
+            normalizedTarget = reference.getTargetLanguagePath();
+        }
+
+        if (normalizedTarget.isBlank()) {
+            return "";
+        }
+
+        try {
+            normalizedTarget = Paths.get(normalizedTarget).normalize().toString();
+        } catch (Exception e) {
+            normalizedTarget = normalizedTarget.trim();
+        }
+
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            normalizedTarget = normalizedTarget.toLowerCase();
+        }
+
+        return normalizedTarget;
+    }
+
+    private DictCore getOrLoadLinkedCore(LinkedLanguage linkedLanguage) {
+        if (linkedLanguage == null) {
+            return null;
+        }
+
+        String resolvedPath = linkedLanguage.getResolvedTargetFile(core);
+        if (resolvedPath.isBlank()) {
+            return null;
+        }
+
+        if (linkedLanguageCoreCache.containsKey(resolvedPath)) {
+            return linkedLanguageCoreCache.get(resolvedPath);
+        }
+
+        try {
+            DictCore linkedCore = loadReadOnlyCore(resolvedPath);
+            linkedLanguageCoreCache.put(resolvedPath, linkedCore);
+            return linkedCore;
+        } catch (Exception e) {
+            DesktopIOHandler.getInstance().writeErrorLog(e);
+            return null;
+        }
+    }
+
+    private void refreshLinkedWordChoices() {
+        if (cmbLinkedWord == null || cmbLinkedLanguage == null || txtLinkedWordSearch == null) {
+            return;
+        }
+
+        if (!linkedWordPopulating && (chkLinkedWord == null || !chkLinkedWord.isSelected())) {
+            cmbLinkedWord.removeAllItems();
+            return;
+        }
+
+        linkedWordPopulating = true;
+        try {
+            LinkedLanguage selectedLanguage = getSelectedLinkedLanguage();
+            String search = txtLinkedWordSearch.getText() == null ? "" : txtLinkedWordSearch.getText().trim().toLowerCase();
+            LinkedWordReference reference = getCurrentLinkedWordReference();
+            int selectedWordId = reference == null ? -1 : reference.getTargetWordId();
+            DictCore linkedCore = getOrLoadLinkedCore(selectedLanguage);
+
+            cmbLinkedWord.removeAllItems();
+            if (linkedCore == null) {
+                cmbLinkedWord.setRenderer(new PListCellRenderer(core));
+                return;
+            }
+
+            cmbLinkedWord.setRenderer(new PListCellRenderer(linkedCore));
+            List<ConWord> words = new ArrayList<>(linkedCore.getWordCollection().getWordNodesList());
+            List<ConWord> filteredWords = new ArrayList<>();
+            for (ConWord word : words) {
+                if (matchesLinkedWordSearch(word, search)) {
+                    filteredWords.add(word);
+                }
+            }
+
+            if (selectedWordId > 0) {
+                ConWord selectedWord = linkedCore.getWordCollection().getNodeById(selectedWordId);
+                if (selectedWord != null && !filteredWords.contains(selectedWord)) {
+                    filteredWords.add(0, selectedWord);
+                }
+            }
+
+            for (ConWord word : filteredWords) {
+                cmbLinkedWord.addItem(word);
+            }
+
+            if (selectedWordId > 0) {
+                ConWord selectedWord = linkedCore.getWordCollection().getNodeById(selectedWordId);
+                if (selectedWord != null) {
+                    cmbLinkedWord.setSelectedItem(selectedWord);
+                } else {
+                    cmbLinkedWord.setSelectedItem(null);
+                }
+            } else {
+                cmbLinkedWord.setSelectedItem(null);
+            }
+        } finally {
+            linkedWordPopulating = false;
+        }
+    }
+
+    private boolean matchesLinkedWordSearch(ConWord word, String search) {
+        if (word == null) {
+            return false;
+        }
+
+        if (search == null || search.isBlank()) {
+            return true;
+        }
+
+        String conValue = word.getValue() == null ? "" : word.getValue().toLowerCase();
+        String localValue = word.getLocalWord() == null ? "" : word.getLocalWord().toLowerCase();
+        String definition = word.getDefinition() == null ? "" : word.getDefinition().toLowerCase();
+
+        return conValue.contains(search)
+                || localValue.contains(search)
+                || definition.contains(search);
+    }
+
+    private LinkedWordReference getCurrentLinkedWordReference() {
+        ConWord word = getCurrentWord();
+        return word == null ? null : word.getLinkedWordReference();
+    }
+
+    private void populateLinkedWordControls(ConWord word) {
+        linkedWordPopulating = true;
+        try {
+            if (chkLinkedWord == null) {
+                return;
+            }
+
+            LinkedWordReference reference = word == null ? null : word.getLinkedWordReference();
+            boolean hasLink = reference != null && !reference.isEmpty();
+            chkLinkedWord.setSelected(hasLink);
+            setLinkedWordControlsEnabled(hasLink);
+
+            if (!hasLink) {
+                clearLinkedWordSelection();
+                return;
+            }
+
+            refreshLinkedLanguageChoices();
+
+            LinkedLanguage selectedLanguage = findLinkedLanguageByPath(normalizeLinkedWordTarget(reference));
+            if (selectedLanguage != null) {
+                cmbLinkedLanguage.setSelectedItem(selectedLanguage);
+            }
+
+            if (txtLinkedWordSearch != null) {
+                txtLinkedWordSearch.setText("");
+            }
+
+            if (cmbLinkedRelation != null) {
+                cmbLinkedRelation.setSelectedItem(reference.getRelationType());
+            }
+
+            refreshLinkedWordChoices();
+
+            if (reference.getTargetWordId() > 0 && cmbLinkedWord != null) {
+                DictCore linkedCore = getOrLoadLinkedCore(selectedLanguage);
+                if (linkedCore != null && linkedCore.getWordCollection().exists(reference.getTargetWordId())) {
+                    cmbLinkedWord.setSelectedItem(linkedCore.getWordCollection().getNodeById(reference.getTargetWordId()));
+                }
+            }
+        } finally {
+            linkedWordPopulating = false;
+        }
+    }
+
+    private final class LinkedLanguageRenderer extends DefaultListCellRenderer {
+        @Override
+        public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+            if (value instanceof LinkedLanguage linkedLanguage) {
+                setText(linkedLanguage.getLanguageName() + " - " + linkedLanguage.getTargetFile());
+            }
+
+            return this;
+        }
+    }
     
     /**
      * Performs setup actions that take a particularly long time to complete
@@ -497,6 +903,7 @@ public final class ScrLexicon extends PFrame {
 
             if (core != _core) {
                 core = _core;
+                linkedLanguageCoreCache.clear();
             }
             
             // ensure same value is selected post update
@@ -515,6 +922,8 @@ public final class ScrLexicon extends PFrame {
             setupComboBoxesSwing();
             populateProperties();
             refreshLinkedLanguagesTable();
+            refreshLinkedLanguageChoices();
+            refreshLinkedWordChoices();
                 
             Runnable fxSetup = () -> {
                 setupComboBoxesFX();
@@ -1694,6 +2103,7 @@ public final class ScrLexicon extends PFrame {
                 cmbType.setSelectedIndex(0);
                 chkProcOverride.setSelected(false);
                 chkRuleOverride.setSelected(false);
+                clearLinkedWordSelection();
                 setPropertiesEnabled(false);
             } else {
                 if (!namePopulating) {
@@ -1722,6 +2132,7 @@ public final class ScrLexicon extends PFrame {
                 setupClassPanel(curWord.getWordTypeId());
                 setupDisplayPreviewField();
                 populateClassPanel();
+                populateLinkedWordControls(curWord);
                 refreshDisplayPreview();
                 setPropertiesEnabled(true);
             }
@@ -1751,6 +2162,9 @@ public final class ScrLexicon extends PFrame {
             cmbType.setEnabled(enable && core.getTypes().getNodes().length > 0);
             chkProcOverride.setEnabled(enable);
             chkRuleOverride.setEnabled(enable);
+            if (chkLinkedWord != null) {
+                chkLinkedWord.setEnabled(enable);
+            }
             btnDeclensions.setEnabled(enable);
             btnLogographs.setEnabled(enable && btnLogoShouldEnable());
             btnEtymology.setEnabled(enable);
@@ -1761,6 +2175,7 @@ public final class ScrLexicon extends PFrame {
                     classComp.setEnabled(enable);
                 }
             });
+            setLinkedWordControlsEnabled(enable && chkLinkedWord != null && chkLinkedWord.isSelected());
         };
         SwingUtilities.invokeLater(runnable);
     }
@@ -1908,6 +2323,39 @@ public final class ScrLexicon extends PFrame {
                 core.getOSHandler().getInfoBox().error("Value Save Error", "Unknown class value type.");
             }
         });
+
+        if (chkLinkedWord == null || !chkLinkedWord.isSelected()) {
+            saveWord.clearLinkedWordReference();
+            return;
+        }
+
+        LinkedWordReference reference = saveWord.getLinkedWordReference();
+        if (reference == null) {
+            reference = new LinkedWordReference();
+        }
+
+        LinkedLanguage selectedLanguage = getSelectedLinkedLanguage();
+        if (selectedLanguage == null) {
+            saveWord.clearLinkedWordReference();
+            return;
+        }
+
+        reference.setTargetLanguagePath(selectedLanguage.getTargetFile());
+        reference.setCachedTargetLanguageName(selectedLanguage.getLanguageName());
+        reference.setRelationType(cmbLinkedRelation != null && cmbLinkedRelation.getSelectedItem() instanceof LexicalRelationType relationType
+                ? relationType : LexicalRelationType.RELATED);
+
+        if (cmbLinkedWord != null && cmbLinkedWord.getSelectedItem() instanceof ConWord linkedWord) {
+            reference.setTargetWordId(linkedWord.getId());
+            reference.setCachedTargetWordValue(linkedWord.getValue());
+            reference.setCachedTargetWordDefinition(linkedWord.getDefinition());
+        } else {
+            reference.setTargetWordId(-1);
+            reference.setCachedTargetWordValue("");
+            reference.setCachedTargetWordDefinition("");
+        }
+
+        saveWord.setLinkedWordReference(reference);
     }
 
     /**
@@ -2334,6 +2782,7 @@ public final class ScrLexicon extends PFrame {
         jScrollPane1.setViewportView(txtErrorBox);
 
         pnlClasses.setMaximumSize(new java.awt.Dimension(0, 0));
+        pnlLinkedWord = buildLinkedWordPanel();
 
         javax.swing.GroupLayout pnlClassesLayout = new javax.swing.GroupLayout(pnlClasses);
         pnlClasses.setLayout(pnlClassesLayout);
@@ -2370,6 +2819,7 @@ public final class ScrLexicon extends PFrame {
             .addComponent(txtLocalWord)
             .addComponent(cmbType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(txtConWord)
+            .addComponent(pnlLinkedWord, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel3Layout.createSequentialGroup()
@@ -2401,6 +2851,8 @@ public final class ScrLexicon extends PFrame {
                 .addComponent(chkProcOverride)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkRuleOverride)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnlLinkedWord, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 154, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)

@@ -97,6 +97,9 @@ public class WordParser extends BaseParser {
             case PGTUtil.WORD_DESCENDANT_LINK_XID -> {
                 new DescendantLinkParser(parseIssues, conWord).parse(node, core);
             }
+            case PGTUtil.WORD_LINK_REFERENCE_XID -> {
+                new LinkedWordReferenceParser(parseIssues, conWord).parse(node, core);
+            }
             default ->
                 throw new PDomException("Unexpected node in " + this.getClass().getName() + " : " + node.getNodeName());
         }

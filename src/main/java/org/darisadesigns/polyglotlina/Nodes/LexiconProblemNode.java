@@ -19,6 +19,7 @@
  */
 package org.darisadesigns.polyglotlina.Nodes;
 
+import java.util.Objects;
 import org.darisadesigns.polyglotlina.CheckLanguageErrors.AlphaProblem;
 
 /**
@@ -30,25 +31,38 @@ public class LexiconProblemNode implements Comparable<LexiconProblemNode>{
     public final static int SEVARITY_WARNING = 1;
     public final static int SEVARITY_ERROR = 2;
     public final DictNode problemWord;
+    public final Object affectedItem;
     public final String description;
     public final ProblemType problemType;
     public final String shortDescription;
+    public final String issueCode;
+    public final String details;
+    public final String suggestedFix;
     public final int severity;
     public final boolean useConFont;
     
     public LexiconProblemNode(DictNode _problemWord, String _description, ProblemType _problemType, int _severity ) {
+        this(_problemWord, _description, _problemType, _severity, "", _description, "");
+    }
+
+    public LexiconProblemNode(DictNode _problemWord, String _description, ProblemType _problemType,
+            int _severity, String _issueCode, String _details, String _suggestedFix ) {
         problemWord = _problemWord;
+        affectedItem = _problemWord;
         description = _description;
         problemType = _problemType;
         severity = _severity;
+        issueCode = _issueCode == null ? "" : _issueCode;
+        details = _details == null ? _description : _details;
+        suggestedFix = _suggestedFix == null ? "" : _suggestedFix;
         
         switch (_problemType) {
             case ConWord:
-                shortDescription = _problemWord.getValue();
+                shortDescription = _problemWord == null ? "Word Issue" : _problemWord.getValue();
                 useConFont = true;
                 break;
             case PoS:
-                shortDescription = "Part of Speech: " + _problemWord.getValue();
+                shortDescription = _problemWord == null ? "Part of Speech Issue" : "Part of Speech: " + _problemWord.getValue();
                 useConFont = true;
                 break;
             case Phonology:
@@ -78,7 +92,15 @@ public class LexiconProblemNode implements Comparable<LexiconProblemNode>{
         int ret;
         
         if (this.problemType == o.problemType) {
-            ret= this.problemWord.compareTo(o.problemWord);
+            if (this.problemWord == null && o.problemWord == null) {
+                ret = 0;
+            } else if (this.problemWord == null) {
+                ret = -1;
+            } else if (o.problemWord == null) {
+                ret = 1;
+            } else {
+                ret= this.problemWord.compareTo(o.problemWord);
+            }
         } else {
             ret = this.problemType.value < o.problemType.value ? -1 : 1;
         }

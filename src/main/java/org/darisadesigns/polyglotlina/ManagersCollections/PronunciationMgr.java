@@ -205,6 +205,21 @@ public class PronunciationMgr {
     private int[] getSyllableBreaks(String base) {
         return getSyllableBreaksRecurse(base, 0);
     }
+
+    /**
+     * Returns true if the current syllable inventory can segment the given
+     * string. Used by the consistency checker.
+     *
+     * @param base string to test
+     * @return true if a syllable path exists
+     */
+    public boolean canComposeSyllables(String base) {
+        if (!syllableCompositionEnabled || base == null || base.isBlank()) {
+            return true;
+        }
+
+        return getSyllableBreaks(base.trim()).length > 0;
+    }
     
     private int[] getSyllableBreaksRecurse(String base, int cur) {
         for (int i = 1; i <= base.length(); i++) {

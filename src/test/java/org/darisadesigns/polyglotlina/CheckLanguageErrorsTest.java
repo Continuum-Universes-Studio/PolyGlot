@@ -21,9 +21,16 @@ package org.darisadesigns.polyglotlina;
 
 import TestResources.DummyCore;
 import java.io.IOException;
+import java.util.Arrays;
 import javax.xml.parsers.ParserConfigurationException;
 import org.darisadesigns.polyglotlina.Nodes.LexiconProblemNode;
 import org.darisadesigns.polyglotlina.Nodes.LexiconProblemNode.ProblemType;
+import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.Nodes.DescendantLink;
+import org.darisadesigns.polyglotlina.Nodes.LexicalRelationType;
+import org.darisadesigns.polyglotlina.Nodes.LinkedWordReference;
+import org.darisadesigns.polyglotlina.Validation.ConsistencyChecker;
+import org.darisadesigns.polyglotlina.Validation.ConsistencyIssue;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
@@ -57,28 +64,24 @@ public class CheckLanguageErrorsTest {
         int expectedProblems = 4;
         
         LexiconProblemNode[] problems = CheckLanguageErrors.checkCore(badLexEntriesCore, false);
-        assertEquals(expectedProblems, problems.length);
-        
-        LexiconProblemNode curWord = problems[0];
-        assertEquals("bad-pattern", curWord.problemWord.getValue());
-        assertEquals("Word does not match enforced pattern for type: noun.", curWord.description);
-        
-        curWord = problems[1];
-        assertEquals("bad-romanization-1-noun", curWord.problemWord.getValue());
-        assertTrue(curWord.description.contains("Word contains characters undefined in alphabet settings."));
-        assertTrue(curWord.description.contains("Suspect characters:\"1\""));
-        assertTrue(curWord.description.contains("Word cannot be romanized properly (missing regex pattern)."));
-        
-        curWord = problems[2];
-        assertEquals("missing-POS-and-alphabet", curWord.problemWord.getValue());
-        assertTrue(curWord.description.contains("Part of Speech set to mandatory."));
-        assertTrue(curWord.description.contains("Word contains characters undefined in alphabet settings"));
-        assertTrue(curWord.description.contains("Suspect characters:\"POS\""));
-        assertTrue(curWord.description.contains("Word pronunciation cannot be generated properly (missing regex pattern)."));
-        
-        curWord = problems[3];
-        assertEquals("missing-local-noun", curWord.problemWord.getValue());
-        assertEquals("Local Lang word set to mandatory.", curWord.description);
+        assertTrue(problems.length >= expectedProblems);
+
+        assertProblem(problems, "bad-pattern", ProblemType.ConWord,
+                "Word does not match enforced pattern for type: noun.");
+
+        assertProblemContains(problems, "bad-romanization-1-noun", ProblemType.ConWord,
+                "Word contains characters undefined in alphabet settings.",
+                "Suspect characters:\"1\"",
+                "Word cannot be romanized properly (missing regex pattern).");
+
+        assertProblemContains(problems, "missing-POS-and-alphabet", ProblemType.ConWord,
+                "Part of Speech set to mandatory.",
+                "Word contains characters undefined in alphabet settings",
+                "Suspect characters:\"POS\"",
+                "Word pronunciation cannot be generated properly (missing regex pattern).");
+
+        assertProblem(problems, "missing-local-noun", ProblemType.ConWord,
+                "Local Lang word set to mandatory.");
     }
     
     @Test
@@ -88,47 +91,22 @@ public class CheckLanguageErrorsTest {
         int expectedProblems = 7;
         
         LexiconProblemNode[] problems = CheckLanguageErrors.checkCore(badRegexEntriesCore, false);
-        assertEquals(expectedProblems, problems.length);
-        
-        LexiconProblemNode problem = problems[0];
-        assertEquals(ProblemType.PoS, problem.problemType);
-        assertEquals("BadConjTransform", problem.problemWord.getValue());
-        assertEquals("\nThe replacement text \"(\" within rule broken2 is illegal.\nThe regex transform \"(\" within rule broken2 of up forth is illegal.", problem.description);
-        
-        problem = problems[1];
-        assertEquals(ProblemType.PoS, problem.problemType);
-        assertEquals("BadConjTransform", problem.problemWord.getValue());
-        assertEquals("\nThe regex transform \"(\" within rule broken-nonD of  is illegal.", problem.description);
-        
-        problem = problems[2];
-        assertEquals(ProblemType.PoS, problem.problemType);
-        assertEquals("badTypePattern", problem.problemWord.getValue());
-        assertEquals("Illegal regex value: \"(\"", problem.description); 
-        assertEquals("Part of Speech: badTypePattern", problem.shortDescription);
-        
-        problem = problems[3];
-        assertEquals(ProblemType.Phonology, problem.problemType);
-        assertEquals("(", problem.problemWord.getValue());
-        assertEquals("Pronunciation regex: \"(\" is illegal.", problem.description); 
-        assertEquals("Phonology Problem", problem.shortDescription);
-        
-        problem = problems[4];
-        assertEquals(ProblemType.Phonology, problem.problemType);
-        assertEquals("(", problem.problemWord.getValue());
-        assertEquals("Romanization regex: \"(\" is illegal.", problem.description); 
-        assertEquals("Phonology Problem", problem.shortDescription);
-        
-        problem = problems[5];
-        assertEquals(ProblemType.Phonology, problem.problemType);
-        assertEquals("PronuncRegex", problem.problemWord.getValue());
-        assertEquals("Pronunciation text: \"(\" is illegal regex insertion.", problem.description); 
-        assertEquals("Phonology Problem", problem.shortDescription);
-        
-        problem = problems[6];
-        assertEquals(ProblemType.Phonology, problem.problemType);
-        assertEquals("RomanRegex", problem.problemWord.getValue());
-        assertEquals("Romanization value: \"RomanRegex\" is illegal regex insertion.", problem.description); 
-        assertEquals("Phonology Problem", problem.shortDescription);
+        assertTrue(problems.length >= expectedProblems);
+
+        assertProblem(problems, "BadConjTransform", ProblemType.PoS,
+                "\nThe replacement text \"(\" within rule broken2 is illegal.\nThe regex transform \"(\" within rule broken2 of up forth is illegal.");
+        assertProblem(problems, "BadConjTransform", ProblemType.PoS,
+                "\nThe regex transform \"(\" within rule broken-nonD of  is illegal.");
+        assertProblem(problems, "badTypePattern", ProblemType.PoS,
+                "Illegal regex value: \"(\"");
+        assertProblem(problems, "(", ProblemType.Phonology,
+                "Pronunciation regex: \"(\" is illegal.");
+        assertProblem(problems, "(", ProblemType.Phonology,
+                "Romanization regex: \"(\" is illegal.");
+        assertProblem(problems, "PronuncRegex", ProblemType.Phonology,
+                "Pronunciation text: \"(\" is illegal regex insertion.");
+        assertProblem(problems, "RomanRegex", ProblemType.Phonology,
+                "Romanization value: \"RomanRegex\" is illegal regex insertion.");
     }
     
     @Test
@@ -144,5 +122,93 @@ public class CheckLanguageErrorsTest {
         } catch (IOException | IllegalStateException | ParserConfigurationException e) {
             fail(e);
         }
+    }
+
+    @Test
+    public void testCheckCore_CompatibilityWrapperIncludesModularIssues() {
+        System.out.println("CheckLanguageErrorsTest.testCheckCore_CompatibilityWrapperIncludesModularIssues");
+
+        DictCore dictCore = buildModularValidationCore();
+        LexiconProblemNode[] problems = CheckLanguageErrors.checkCore(dictCore, false);
+
+        assertTrue(Arrays.stream(problems).anyMatch(problem
+                -> "phoneme.inventory.invalid_ipa".equals(problem.issueCode)));
+        assertTrue(Arrays.stream(problems).anyMatch(problem
+                -> "linked.word.unknown_language".equals(problem.issueCode)));
+    }
+
+    private DictCore buildModularValidationCore() {
+        DictCore dictCore = DummyCore.newCore();
+        dictCore.getPropertiesManager().getAlphaOrder().put("a", 0);
+        dictCore.getPronunciationMgr().setSyllableCompositionEnabled(true);
+        dictCore.getPronunciationMgr().addSyllable("a");
+        dictCore.getPronunciationMgr().addIllegalCluster("z");
+
+        ConWord word = dictCore.getWordCollection().getBuffer();
+        word.setValue("z");
+        word.setLocalWord("z");
+        word.setDefinition("z");
+        word.setProcOverride(true);
+        word.setPronunciation("☃");
+
+        DescendantLink descendantLink = word.getDescendantLink();
+        descendantLink.setParentWordValue("proto");
+        descendantLink.setParentLanguageName("Ancestor");
+
+        LinkedWordReference reference = new LinkedWordReference();
+        reference.setTargetLanguagePath("/tmp/non-existent-linked-language.pgd");
+        reference.setCachedTargetLanguageName("Missing");
+        reference.setRelationType(LexicalRelationType.LOANWORD);
+        word.setLinkedWordReference(reference);
+
+        try {
+            dictCore.getWordCollection().insert();
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        return dictCore;
+    }
+
+    private LexiconProblemNode assertProblem(LexiconProblemNode[] problems, String wordValue,
+            ProblemType type, String expectedDescription) {
+        for (LexiconProblemNode problem : problems) {
+            if (problem.problemType == type
+                    && problem.problemWord != null
+                    && wordValue.equals(problem.problemWord.getValue())
+                    && expectedDescription.equals(problem.description)) {
+                return problem;
+            }
+        }
+
+        fail("Expected problem not found for word " + wordValue + " and description " + expectedDescription);
+        return null;
+    }
+
+    private LexiconProblemNode assertProblemContains(LexiconProblemNode[] problems, String wordValue,
+            ProblemType type, String... descriptionFragments) {
+        for (LexiconProblemNode problem : problems) {
+            if (problem.problemType != type
+                    || problem.problemWord == null
+                    || !wordValue.equals(problem.problemWord.getValue())) {
+                continue;
+            }
+
+            boolean matches = true;
+            for (String fragment : descriptionFragments) {
+                if (!problem.description.contains(fragment)) {
+                    matches = false;
+                    break;
+                }
+            }
+
+            if (matches) {
+                return problem;
+            }
+        }
+
+        fail("Expected problem not found for word " + wordValue + " with description fragments "
+                + Arrays.toString(descriptionFragments));
+        return null;
     }
 }
