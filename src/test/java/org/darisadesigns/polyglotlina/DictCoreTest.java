@@ -29,6 +29,7 @@ import javax.xml.transform.TransformerException;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.DesktopGrammarChapNode;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
 import org.darisadesigns.polyglotlina.Nodes.DescendantLink;
+import org.darisadesigns.polyglotlina.Nodes.GeneratorSettings;
 import org.darisadesigns.polyglotlina.Nodes.LanguageLinkType;
 import org.darisadesigns.polyglotlina.Nodes.LanguageRelation;
 import org.darisadesigns.polyglotlina.Nodes.LanguageRelationType;
@@ -237,7 +238,7 @@ public class DictCoreTest {
             reload.readFile(childFile.toString());
 
             assertEquals(origin, reload);
-        } catch (IOException | IllegalStateException | ParserConfigurationException | TransformerException e) {
+        } catch (Exception e) {
             fail(e);
         } finally {
             if (parentFile != null && parentFile.exists()) {
@@ -350,6 +351,65 @@ public class DictCoreTest {
             legacyCore.readFile(PGTUtil.TESTRESOURCES + "basic_lang.pgd");
 
             assertTrue(legacyCore.getPropertiesManager().getLinkedLanguages().isEmpty());
+        } catch (IOException | IllegalStateException | ParserConfigurationException e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    public void testGeneratorSettingsRoundTrip() {
+        System.out.println("DictCoreTest.testGeneratorSettingsRoundTrip");
+
+        File languageFile = null;
+
+        try {
+            DictCore origin = DummyCore.newCore();
+            DictCore reload = DummyCore.newCore();
+
+            languageFile = File.createTempFile("POLYGLOT_GENERATOR", ".pgd");
+            languageFile.deleteOnExit();
+
+            GeneratorSettings settings = origin.getPropertiesManager().getGeneratorSettings();
+            settings.setCategories("C=ptk\nV=aei");
+            settings.setIllegalClusters("pt");
+            settings.setRewriteRules("aa|ā");
+            settings.setSyllableTypes("CV\nCVC");
+            settings.setDropoffRate(12);
+            settings.setMonosyllableFrequency(55);
+            settings.setShowSyllables(true);
+            settings.setSlowSyllableDropoff(true);
+            settings.setGenerationCount("42");
+            settings.setGenerateWords(false);
+
+            origin.writeFile(languageFile.toString(), false, false);
+            reload.readFile(languageFile.toString());
+
+            assertEquals(origin.getPropertiesManager().getGeneratorSettings(),
+                    reload.getPropertiesManager().getGeneratorSettings());
+        } catch (IOException | IllegalStateException | ParserConfigurationException | TransformerException e) {
+            fail(e);
+        } finally {
+            if (languageFile != null && languageFile.exists()) {
+                languageFile.delete();
+            }
+        }
+    }
+
+    @Test
+    public void testLegacyLanguageLoadWithoutGeneratorStateUsesDefaults() {
+        System.out.println("DictCoreTest.testLegacyLanguageLoadWithoutGeneratorStateUsesDefaults");
+
+        try {
+            DictCore legacyCore = DummyCore.newCore();
+            legacyCore.readFile(PGTUtil.TESTRESOURCES + "basic_lang.pgd");
+
+            GeneratorSettings settings = legacyCore.getPropertiesManager().getGeneratorSettings();
+            assertEquals(GeneratorSettings.DEFAULT_DROPOFF_RATE, settings.getDropoffRate());
+            assertEquals(GeneratorSettings.DEFAULT_MONOSYLLABLE_FREQUENCY, settings.getMonosyllableFrequency());
+            assertEquals(GeneratorSettings.DEFAULT_GENERATION_COUNT, settings.getGenerationCount());
+            assertFalse(settings.isShowSyllables());
+            assertFalse(settings.isSlowSyllableDropoff());
+            assertTrue(settings.isGenerateWords());
         } catch (IOException | IllegalStateException | ParserConfigurationException e) {
             fail(e);
         }

@@ -65,6 +65,7 @@ import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.ManagersCollections.ConWordCollection.ConWordDisplay;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.Nodes.GeneratorSettings;
 import org.darisadesigns.polyglotlina.ZompistVocabGenerator;
 
 /**
@@ -129,117 +130,40 @@ public class ScrZompistLexiconGen extends PFrame {
     }
     
     private void loadValues() {
-        var categoriesStr = core.getPropertiesManager().getZompistCategories();
-        var illegalsStr = core.getPropertiesManager().getZompistIllegalClusters();
-        var rewriteStr = core.getPropertiesManager().getZompistRewriteRules();
-        var syllablesStr = core.getPropertiesManager().getZompistSyllableTypes();
-        
-        setDefaultValues();
-        
-        if (!categoriesStr.isBlank() 
-                || !illegalsStr.isBlank() 
-                || !rewriteStr.isBlank() 
-                || !syllablesStr.isBlank()) {
-            txtCategories.setText(categoriesStr);
-            txtIllegalClusters.setText(illegalsStr);
-            txtRewriteRules.setText(rewriteStr);
-            txtSyllableTypes.setText(syllablesStr);
+        var settings = getGeneratorSettings();
+
+        if (!settings.hasStoredRules()) {
+            settings.applyDefaultPreset(0);
         }
+
+        applySettingsToUi(settings);
+        curDefaults = 1;
     }
     
     private void setDefaultValues() {    
-        String defaultPhonotacticConstraints = "pw\nfw\nbw\ntl\ndl\nθl\ngw\nmb\nmv";
-        switch (curDefaults) {
-            case 0 -> {
-                // Large inventory
-                txtCategories.setText("C=ptknslrmbdgfvwyhšzñxčžŋ\nV=aiuoeɛɔâôüö\nR=rly");
-                txtSyllableTypes.setText("CV\nV\nCVC\nCRV");
-                txtRewriteRules.setText("â|ai\nô|au");
-                txtIllegalClusters.setText(defaultPhonotacticConstraints);
-            }
-            case 1 -> {
-                // Latinate
-                txtCategories.setText("C=tkpnslrmfbdghvyh\nV=aiueo\nU=aiuôê\nR=rl\nM=nsrmltc\nK=ptkbdg");
-                txtSyllableTypes.setText("CV\nCUM\nV\nUM\nKRV\nKRUM");
-                txtRewriteRules.setText("ka|ca\nko|co\nku|cu\nkr|cr");
-                txtIllegalClusters.setText(defaultPhonotacticConstraints);
-            }
-            case 2 -> {
-                // Simple
-                txtCategories.setText("C=tpknlrsmʎbdgñfh\nV=aieuoāīūēō\nN=nŋ");
-                txtSyllableTypes.setText("CV\nV\nCVN");
-                txtRewriteRules.setText("aa|ā\nii|ī\nuu|ū\nee|ē\noo|ō\nnb|mb\nnp|mp");
-                txtIllegalClusters.setText(defaultPhonotacticConstraints);
-            }
-            case 3 -> {
-                // Chinese
-                txtCategories.setText("C=ptknlsmšywčhfŋ\nV=auieo\nR=rly\nN=nnŋmktp\nW=io\nQ=ptkč");
-                txtSyllableTypes.setText("CV\nQʰV\nCVW\nCVN\nVN\nV\nQʰVN");
-                txtRewriteRules.setText("uu|wo\noo|ou\nii|iu\naa|ia\nee|ie");
-                txtIllegalClusters.setText(defaultPhonotacticConstraints);
-            }
-            case 4 -> {
-                // Original default
-                txtCategories.setText("C=ptkbdg\nR=rl\nV=ieaou");
-                txtSyllableTypes.setText("CV\nV\nCRV");
-                txtRewriteRules.setText("ki|či");
-                txtIllegalClusters.setText(defaultPhonotacticConstraints);
-            }
-            case 5-> {
-                // Original default
-                txtCategories.setText("C=tknsmrh\n" +
-                        "V=aioeu\n" +
-                        "U=auoāēū\n" +
-                        "L=āīōēū");
-                txtSyllableTypes.setText("CV\n" +
-                        "CVn\n" +
-                        "CL\n" +
-                        "CLn\n" +
-                        "CyU\n" +
-                        "CyUn\n" +
-                        "Vn\n" +
-                        "Ln\n" +
-                        "CVq\n" +
-                        "CLq\n" +
-                        "yU\n" +
-                        "yUn\n" +
-                        "wa\n" +
-                        "L\n" +
-                        "V");
-                txtRewriteRules.setText("hu|fu\n" +
-                        "hū|fū\n" +
-                        "si|shi\n" +
-                        "sī|shī\n" +
-                        "sy|sh\n" +
-                        "ti|chi\n" +
-                        "tī|chī\n" +
-                        "ty|ch\n" +
-                        "tu|tsu\n" +
-                        "tū|tsū\n" +
-                        "qk|kk\n" +
-                        "qp|pp\n" +
-                        "qt|tt\n" +
-                        "q[^ptk]|");
-                txtIllegalClusters.setText(defaultPhonotacticConstraints);
-            }
-            default -> {
-                // something weird happened, just use 0 value and reset
-                curDefaults = 0;
-                txtCategories.setText("C=ptknslrmbdgfvwyhšzñxčžŋ\nV=aiuoeɛɔâôüö\nR=rly");
-                txtSyllableTypes.setText("CV\nV\nCVC\nCRV");
-                txtRewriteRules.setText("â|ai\nô|au");
-                return;
-            }
-        }
-        
-        txtGenerationNum.setText("150");
-        rdoGenWords.setSelected(true);
-        chkShowSyllables.setSelected(false);
-        chkSlowSyllableDropoff.setSelected(false);
-        sldDropoff.setValue(core.getPropertiesManager().getZompistDropoffRate());
-        sldMonoSyllables.setValue(core.getPropertiesManager().getZompistMonosylableFrequency());
-        
-        curDefaults = (curDefaults + 1) % 6;
+        var settings = getGeneratorSettings();
+        settings.applyDefaultPreset(curDefaults);
+        applySettingsToUi(settings);
+        curDefaults = (curDefaults + 1) % GeneratorSettings.PRESET_COUNT;
+    }
+
+    private GeneratorSettings getGeneratorSettings() {
+        return core.getPropertiesManager().getGeneratorSettings();
+    }
+
+    private void applySettingsToUi(GeneratorSettings settings) {
+        txtCategories.setText(settings.getCategories());
+        txtIllegalClusters.setText(settings.getIllegalClusters());
+        txtRewriteRules.setText(settings.getRewriteRules());
+        txtSyllableTypes.setText(settings.getSyllableTypes());
+        txtGenerationNum.setText(settings.getGenerationCount());
+        chkShowSyllables.setSelected(settings.isShowSyllables());
+        chkSlowSyllableDropoff.setSelected(settings.isSlowSyllableDropoff());
+        sldDropoff.setValue(settings.getDropoffRate());
+        sldMonoSyllables.setValue(settings.getMonosyllableFrequency());
+        rdoGenWords.setSelected(settings.isGenerateWords());
+        rdoGenSyllables.setSelected(!settings.isGenerateWords());
+        setWordGenerationControlsEnables(settings.isGenerateWords());
     }
     
     private void setDropoffLabel() {
@@ -384,11 +308,21 @@ public class ScrZompistLexiconGen extends PFrame {
         });
         
         rdoGenWords.addActionListener((ActionEvent e) -> {
+            core.getPropertiesManager().setZompistGenerateWords(true);
             setWordGenerationControlsEnables(true);
         });
         
         rdoGenSyllables.addActionListener((ActionEvent e) -> {
+            core.getPropertiesManager().setZompistGenerateWords(false);
             setWordGenerationControlsEnables(false);
+        });
+
+        chkShowSyllables.addActionListener((ActionEvent e) -> {
+            core.getPropertiesManager().setZompistShowSyllables(chkShowSyllables.isSelected());
+        });
+
+        chkSlowSyllableDropoff.addActionListener((ActionEvent e) -> {
+            core.getPropertiesManager().setZompistSlowSyllableDropoff(chkSlowSyllableDropoff.isSelected());
         });
         
         txtCategories.getDocument().addDocumentListener(new DocumentListener() {
@@ -470,6 +404,24 @@ public class ScrZompistLexiconGen extends PFrame {
                 checkFormatting();
             }
         });
+
+        txtGenerationNum.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                core.getPropertiesManager().setZompistGenerationCount(txtGenerationNum.getText());
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                core.getPropertiesManager().setZompistGenerationCount(txtGenerationNum.getText());
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                core.getPropertiesManager().setZompistGenerationCount(txtGenerationNum.getText());
+            }
+        });
+
         chkUseConlangFont.addActionListener((event) -> {
             setupTextBoxFonts();
         });
@@ -519,7 +471,7 @@ public class ScrZompistLexiconGen extends PFrame {
         try {
             String[] columns = {"Generated Words"};
             var model = new DefaultTableModel(columns, 0);
-            var words = getGenerator().genWords(Integer.parseInt(txtGenerationNum.getText()));
+            var words = getGenerator().genWords(Integer.parseInt(getGeneratorSettings().getGenerationCount()));
 
             for (var word : words) {
                 String[] column = {word};
@@ -591,17 +543,18 @@ public class ScrZompistLexiconGen extends PFrame {
     }
     
     private ZompistVocabGenerator getGenerator() throws Exception {
-        int monoSylVal = sldMonoSyllables.getValue() == 85 ? 0 : sldMonoSyllables.getValue();
+        var settings = getGeneratorSettings();
+        int monoSylVal = settings.getMonosyllableFrequency() == 85 ? 0 : settings.getMonosyllableFrequency();
 
         return new ZompistVocabGenerator(
-                chkSlowSyllableDropoff.isSelected(),
-                chkShowSyllables.isSelected(),
+                settings.isSlowSyllableDropoff(),
+                settings.isShowSyllables(),
                 ((float)monoSylVal)/100, 
-                sldDropoff.getValue(),
-                txtCategories.getText(),
-                txtSyllableTypes.getText(),
-                txtRewriteRules.getText(),
-                txtIllegalClusters.getText(),
+                settings.getDropoffRate(),
+                settings.getCategories(),
+                settings.getSyllableTypes(),
+                settings.getRewriteRules(),
+                settings.getIllegalClusters(),
                 core.getOSHandler()
         );
     }
@@ -799,7 +752,7 @@ public class ScrZompistLexiconGen extends PFrame {
     
     private void generateValues() {
         setEnableMenuButtons(false);
-        isWordImport = rdoGenWords.isSelected();
+        isWordImport = getGeneratorSettings().isGenerateWords();
         
         pnlTop.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         SwingUtilities.invokeLater(() ->{

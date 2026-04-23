@@ -26,19 +26,25 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JCheckBox;
+import javax.swing.JRadioButton;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.xml.parsers.ParserConfigurationException;
 import org.darisadesigns.polyglotlina.Desktop.DesktopIOHandler;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.Nodes.GeneratorSettings;
 import org.darisadesigns.polyglotlina.Nodes.LexiconProblemNode;
 import org.darisadesigns.polyglotlina.Nodes.TypeNode;
 import org.darisadesigns.polyglotlina.PGTUtil;
 import org.darisadesigns.polyglotlina.QuizEngine.Quiz;
 import org.darisadesigns.polyglotlina.QuizEngine.QuizQuestion;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -468,6 +474,42 @@ public class OpenScreensTest {
         
         testExceptions(new Object() {}.getClass().getEnclosingMethod().getName());
     }
+
+    @Test
+    public void testScrZompistLexiconGenLoadsGeneratorSettings() throws Exception {
+        System.out.println("OpenScreensTest.testScrZompistLexiconGenLoadsGeneratorSettings");
+
+        if (headless) {
+            return;
+        }
+
+        GeneratorSettings settings = core.getPropertiesManager().getGeneratorSettings();
+        settings.setCategories("C=pt\nV=ae");
+        settings.setIllegalClusters("pt");
+        settings.setRewriteRules("aa|ā");
+        settings.setSyllableTypes("CV\nCVC");
+        settings.setShowSyllables(true);
+        settings.setSlowSyllableDropoff(true);
+        settings.setGenerationCount("37");
+        settings.setGenerateWords(false);
+        settings.setDropoffRate(18);
+        settings.setMonosyllableFrequency(51);
+
+        ScrZompistLexiconGen s = new ScrZompistLexiconGen(core);
+
+        assertEquals("C=pt\nV=ae", getFieldValue(s, "txtCategories", JTextArea.class).getText());
+        assertEquals("pt", getFieldValue(s, "txtIllegalClusters", JTextArea.class).getText());
+        assertEquals("aa|ā", getFieldValue(s, "txtRewriteRules", JTextArea.class).getText());
+        assertEquals("CV\nCVC", getFieldValue(s, "txtSyllableTypes", JTextArea.class).getText());
+        assertEquals("37", getFieldValue(s, "txtGenerationNum", JTextField.class).getText());
+        assertTrue(getFieldValue(s, "chkShowSyllables", JCheckBox.class).isSelected());
+        assertTrue(getFieldValue(s, "chkSlowSyllableDropoff", JCheckBox.class).isSelected());
+        assertTrue(getFieldValue(s, "rdoGenSyllables", JRadioButton.class).isSelected());
+
+        s.dispose();
+
+        testExceptions(new Object() {}.getClass().getEnclosingMethod().getName());
+    }
     
     @Test
     public void testScrTypes() {
@@ -614,5 +656,11 @@ public class OpenScreensTest {
             errors.delete();
             fail(failState);
         }
+    }
+
+    private <T> T getFieldValue(Object target, String fieldName, Class<T> type) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return type.cast(field.get(target));
     }
 }

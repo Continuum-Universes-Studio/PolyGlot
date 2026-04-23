@@ -22,6 +22,7 @@ package org.darisadesigns.polyglotlina.DomParser;
 import java.util.List;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.ManagersCollections.PropertiesManager;
+import org.darisadesigns.polyglotlina.Nodes.DisplayMode;
 import org.darisadesigns.polyglotlina.PGTUtil;
 import org.w3c.dom.Node;
 
@@ -88,11 +89,17 @@ public class LangPropertiesParser extends BaseParser {
             case PGTUtil.LANG_PROP_LOCAL_NAME_XID -> {
                 propMan.setLocalLangName(node.getTextContent());
             }
+            case PGTUtil.LANG_PROP_PROJECT_NOTES_XID -> {
+                propMan.setProjectNotes(node.getTextContent());
+            }
             case PGTUtil.LANG_PROP_USE_SIMPLIFIED_CONJ -> {
                 propMan.setUseSimplifiedConjugations(node.getTextContent().equals(PGTUtil.TRUE));
             }
             case PGTUtil.LANG_PROP_EXPANDED_LEX_LIST_DISP -> {
                 propMan.setExpandedLexListDisplay(node.getTextContent().equals(PGTUtil.TRUE));
+            }
+            case PGTUtil.LANG_PROP_LEXICON_DISPLAY_MODE -> {
+                propMan.setLexiconDisplayMode(DisplayMode.fromSerializedValue(node.getTextContent()));
             }
             case PGTUtil.LANG_PROP_ZOMPIST_CATEGORIES -> {
                 propMan.setZompistCategories(node.getTextContent());
@@ -111,6 +118,18 @@ public class LangPropertiesParser extends BaseParser {
             }
             case PGTUtil.LANG_PROP_ZOMPIST_MONOSYLLABLE_FREQUENCY -> {
                 propMan.setZompistMonosylableFrequency(Integer.parseInt(node.getTextContent()));
+            }
+            case PGTUtil.LANG_PROP_ZOMPIST_SHOW_SYLLABLES -> {
+                propMan.setZompistShowSyllables(node.getTextContent().equals(PGTUtil.TRUE));
+            }
+            case PGTUtil.LANG_PROP_ZOMPIST_SLOW_SYLLABLE_DROPOFF -> {
+                propMan.setZompistSlowSyllableDropoff(node.getTextContent().equals(PGTUtil.TRUE));
+            }
+            case PGTUtil.LANG_PROP_ZOMPIST_GENERATION_COUNT -> {
+                propMan.setZompistGenerationCount(node.getTextContent());
+            }
+            case PGTUtil.LANG_PROP_ZOMPIST_GENERATE_WORDS -> {
+                propMan.setZompistGenerateWords(node.getTextContent().equals(PGTUtil.TRUE));
             }
             case PGTUtil.LANG_PROP_LINKED_LANGUAGES_XID -> {
                 new LinkedLanguagesParser(parseIssues).parse(node, core);

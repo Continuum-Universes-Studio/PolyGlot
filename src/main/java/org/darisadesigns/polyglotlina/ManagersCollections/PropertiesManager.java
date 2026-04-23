@@ -29,6 +29,8 @@ import java.util.Objects;
 import org.darisadesigns.polyglotlina.CustomControls.PAlphaMap;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.Nodes.DisplayMode;
+import org.darisadesigns.polyglotlina.Nodes.GeneratorSettings;
 import org.darisadesigns.polyglotlina.Nodes.LanguageEvolutionProfile;
 import org.darisadesigns.polyglotlina.Nodes.LinkedLanguage;
 import org.darisadesigns.polyglotlina.PGTUtil;
@@ -47,13 +49,9 @@ public abstract class PropertiesManager {
     private final PAlphaMap<String, Integer> alphaOrder;
     private String langName = "";
     private String localLangName = "";
+    private String projectNotes = "";
     private String copyrightAuthorInfo = "";
-    private String zompistCategories = "";
-    private String zompistIllegalClusters = "";
-    private String zompistRewriteRules = "";
-    private String zompistSyllableTypes = "";
-    private int zompistDropoffRate = -1;
-    private int zompistMonosylableFrequency = -1;
+    private GeneratorSettings generatorSettings = new GeneratorSettings();
     private boolean typesMandatory = false;
     private boolean localMandatory = false;
     private boolean wordUniqueness = false;
@@ -63,6 +61,7 @@ public abstract class PropertiesManager {
     private boolean disableProcRegex = false;
     private boolean useLocalWordLex = false;
     private boolean expandedLexListDisplay = true;
+    private DisplayMode lexiconDisplayMode = DisplayMode.RENDERED;
     protected byte[] cachedConFont = null;
     protected byte[] cachedLocalFont = null;
     private final Map<String, String> charRep = new HashMap<>();
@@ -85,6 +84,20 @@ public abstract class PropertiesManager {
 
     public void setExpandedLexListDisplay(boolean expandedLexListDisplay) {
         this.expandedLexListDisplay = expandedLexListDisplay;
+    }
+
+    public DisplayMode getLexiconDisplayMode() {
+        if (lexiconDisplayMode == null) {
+            lexiconDisplayMode = DisplayMode.RENDERED;
+        }
+
+        return lexiconDisplayMode;
+    }
+
+    public void setLexiconDisplayMode(DisplayMode lexiconDisplayMode) {
+        this.lexiconDisplayMode = lexiconDisplayMode == null
+                ? DisplayMode.RENDERED
+                : lexiconDisplayMode;
     }
     
     /**
@@ -408,19 +421,19 @@ public abstract class PropertiesManager {
     }
     
     public int getZompistDropoffRate() {
-        return zompistDropoffRate == -1 ? 31 : zompistDropoffRate;
+        return getGeneratorSettings().getDropoffRate();
     }
 
     public void setZompistDropoffRate(int zompistDropoffRate) {
-        this.zompistDropoffRate = zompistDropoffRate;
+        getGeneratorSettings().setDropoffRate(zompistDropoffRate);
     }
 
     public int getZompistMonosylableFrequency() {
-        return zompistMonosylableFrequency == -1 ? 15 : zompistMonosylableFrequency;
+        return getGeneratorSettings().getMonosyllableFrequency();
     }
 
     public void setZompistMonosylableFrequency(int zompistMonosylableFrequency) {
-        this.zompistMonosylableFrequency = zompistMonosylableFrequency;
+        getGeneratorSettings().setMonosyllableFrequency(zompistMonosylableFrequency);
     }
 
     /**
@@ -516,6 +529,12 @@ public abstract class PropertiesManager {
         wordValue = doc.createElement(PGTUtil.LANG_PROP_LOCAL_NAME_XID);
         wordValue.appendChild(doc.createTextNode(localLangName));
         propContainer.appendChild(wordValue);
+
+        if (!projectNotes.isBlank()) {
+            wordValue = doc.createElement(PGTUtil.LANG_PROP_PROJECT_NOTES_XID);
+            wordValue.appendChild(doc.createTextNode(projectNotes));
+            propContainer.appendChild(wordValue);
+        }
         
         // store option to use simplified conjugation autogeneration
         wordValue = doc.createElement(PGTUtil.LANG_PROP_USE_SIMPLIFIED_CONJ);
@@ -526,36 +545,12 @@ public abstract class PropertiesManager {
         wordValue = doc.createElement(PGTUtil.LANG_PROP_EXPANDED_LEX_LIST_DISP);
         wordValue.appendChild(doc.createTextNode(expandedLexListDisplay ? PGTUtil.TRUE : PGTUtil.FALSE));
         propContainer.appendChild(wordValue);
-        
-        // store Zompist categories setup
-        wordValue = doc.createElement(PGTUtil.LANG_PROP_ZOMPIST_CATEGORIES);
-        wordValue.appendChild(doc.createTextNode(zompistCategories));
+
+        wordValue = doc.createElement(PGTUtil.LANG_PROP_LEXICON_DISPLAY_MODE);
+        wordValue.appendChild(doc.createTextNode(getLexiconDisplayMode().name()));
         propContainer.appendChild(wordValue);
         
-        // store Zompist illegal clusters setup
-        wordValue = doc.createElement(PGTUtil.LANG_PROP_ZOMPIST_ILLEGAL_CLUSTERS);
-        wordValue.appendChild(doc.createTextNode(zompistIllegalClusters));
-        propContainer.appendChild(wordValue);
-        
-        // store Zompist rewrite rules setup
-        wordValue = doc.createElement(PGTUtil.LANG_PROP_ZOMPIST_REWRITE_RULES);
-        wordValue.appendChild(doc.createTextNode(zompistRewriteRules));
-        propContainer.appendChild(wordValue);
-        
-        // store Zompist syllables setup
-        wordValue = doc.createElement(PGTUtil.LANG_PROP_ZOMPIST_SYLLABLES);
-        wordValue.appendChild(doc.createTextNode(zompistSyllableTypes));
-        propContainer.appendChild(wordValue);
-        
-        // store Zompist syllables setup
-        wordValue = doc.createElement(PGTUtil.LANG_PROP_ZOMPIST_DROPOFF_RATE);
-        wordValue.appendChild(doc.createTextNode(Integer.toString(zompistDropoffRate)));
-        propContainer.appendChild(wordValue);
-        
-        // store Zompist syllables setup
-        wordValue = doc.createElement(PGTUtil.LANG_PROP_ZOMPIST_MONOSYLLABLE_FREQUENCY);
-        wordValue.appendChild(doc.createTextNode(Integer.toString(zompistMonosylableFrequency)));
-        propContainer.appendChild(wordValue);
+        getGeneratorSettings().writeXML(doc, propContainer);
         
         // store all replacement pairs
         wordValue = doc.createElement(PGTUtil.LANG_PROP_CHAR_REP_CONTAINER_XID);
@@ -597,6 +592,20 @@ public abstract class PropertiesManager {
      */
     public void setLocalLangName(String _localLangName) {
         this.localLangName = _localLangName;
+    }
+
+    /**
+     * @return the projectNotes
+     */
+    public String getProjectNotes() {
+        return projectNotes;
+    }
+
+    /**
+     * @param _projectNotes the projectNotes to set
+     */
+    public void setProjectNotes(String _projectNotes) {
+        this.projectNotes = _projectNotes == null ? "" : _projectNotes.trim();
     }
 
     /**
@@ -750,35 +759,79 @@ public abstract class PropertiesManager {
     }
     
     public String getZompistCategories() {
-        return zompistCategories;
+        return getGeneratorSettings().getCategories();
     }
 
     public void setZompistCategories(String zompistCategories) {
-        this.zompistCategories = zompistCategories;
+        getGeneratorSettings().setCategories(zompistCategories);
     }
 
     public String getZompistIllegalClusters() {
-        return zompistIllegalClusters;
+        return getGeneratorSettings().getIllegalClusters();
     }
 
     public void setZompistIllegalClusters(String zompistIllegalClusters) {
-        this.zompistIllegalClusters = zompistIllegalClusters;
+        getGeneratorSettings().setIllegalClusters(zompistIllegalClusters);
     }
 
     public String getZompistRewriteRules() {
-        return zompistRewriteRules;
+        return getGeneratorSettings().getRewriteRules();
     }
 
     public void setZompistRewriteRules(String zompistRewriteRules) {
-        this.zompistRewriteRules = zompistRewriteRules;
+        getGeneratorSettings().setRewriteRules(zompistRewriteRules);
     }
 
     public String getZompistSyllableTypes() {
-        return zompistSyllableTypes;
+        return getGeneratorSettings().getSyllableTypes();
     }
 
     public void setZompistSyllableTypes(String zompistSyllableTypes) {
-        this.zompistSyllableTypes = zompistSyllableTypes;
+        getGeneratorSettings().setSyllableTypes(zompistSyllableTypes);
+    }
+
+    public boolean isZompistShowSyllables() {
+        return getGeneratorSettings().isShowSyllables();
+    }
+
+    public void setZompistShowSyllables(boolean showSyllables) {
+        getGeneratorSettings().setShowSyllables(showSyllables);
+    }
+
+    public boolean isZompistSlowSyllableDropoff() {
+        return getGeneratorSettings().isSlowSyllableDropoff();
+    }
+
+    public void setZompistSlowSyllableDropoff(boolean slowSyllableDropoff) {
+        getGeneratorSettings().setSlowSyllableDropoff(slowSyllableDropoff);
+    }
+
+    public String getZompistGenerationCount() {
+        return getGeneratorSettings().getGenerationCount();
+    }
+
+    public void setZompistGenerationCount(String generationCount) {
+        getGeneratorSettings().setGenerationCount(generationCount);
+    }
+
+    public boolean isZompistGenerateWords() {
+        return getGeneratorSettings().isGenerateWords();
+    }
+
+    public void setZompistGenerateWords(boolean generateWords) {
+        getGeneratorSettings().setGenerateWords(generateWords);
+    }
+
+    public GeneratorSettings getGeneratorSettings() {
+        if (generatorSettings == null) {
+            generatorSettings = new GeneratorSettings();
+        }
+
+        return generatorSettings;
+    }
+
+    public void setGeneratorSettings(GeneratorSettings generatorSettings) {
+        getGeneratorSettings().apply(generatorSettings);
     }
 
     public List<LinkedLanguage> getLinkedLanguages() {
@@ -865,12 +918,9 @@ public abstract class PropertiesManager {
             ret = ret && charRep.equals(prop.charRep);
             ret = ret && useSimplifiedConjugations == prop.useSimplifiedConjugations;
             ret = ret && expandedLexListDisplay == prop.expandedLexListDisplay;
-            ret = ret && zompistCategories.trim().equals(prop.zompistCategories.trim());
-            ret = ret && zompistIllegalClusters.trim().equals(prop.zompistIllegalClusters.trim());
-            ret = ret && zompistRewriteRules.trim().equals(prop.zompistRewriteRules.trim());
-            ret = ret && zompistSyllableTypes.trim().equals(prop.zompistSyllableTypes.trim());
-            ret = ret && zompistDropoffRate == prop.zompistDropoffRate;
-            ret = ret && zompistMonosylableFrequency == prop.zompistMonosylableFrequency;
+            ret = ret && getLexiconDisplayMode() == prop.getLexiconDisplayMode();
+            ret = ret && projectNotes.trim().equals(prop.projectNotes.trim());
+            ret = ret && getGeneratorSettings().equals(prop.getGeneratorSettings());
             ret = ret && linkedLanguages.equals(prop.linkedLanguages);
             ret = ret && languageEvolutionProfile.equals(prop.languageEvolutionProfile);
         }
@@ -882,6 +932,7 @@ public abstract class PropertiesManager {
     public int hashCode() {
         int hash = 5;
         hash = 79 * hash + Objects.hashCode(this.langName);
+        hash = 79 * hash + Objects.hashCode(this.projectNotes);
         return hash;
     }
 }

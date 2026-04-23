@@ -26,6 +26,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
+import java.awt.FontFormatException;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.KeyEventPostProcessor;
@@ -93,6 +94,7 @@ import org.darisadesigns.polyglotlina.Desktop.PolyGlot;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.HelpHandler;
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.Nodes.LanguageCreationWizardModel;
 import org.darisadesigns.polyglotlina.ToolsHelpers.ExportSpellingDictionary;
 import org.darisadesigns.polyglotlina.WebInterface;
 
@@ -661,6 +663,57 @@ public final class ScrMainMenu extends PFrame {
         genTitle();
 
         if (curWindow == null && performTest) {
+            saveAllValues();
+            cacheLexicon.updateAllValues(core);
+            changeScreen(cacheLexicon, cacheLexicon.getWindow(), null);
+        }
+    }
+
+    private void openLanguageCreationWizard(boolean performTest) {
+        if (performTest && !saveOrCancelTest()) {
+            return;
+        }
+
+        ScrLanguageCreationWizard wizard = new ScrLanguageCreationWizard(core);
+        wizard.setLocationRelativeTo(this);
+
+        LanguageCreationWizardModel wizardModel = wizard.showDialog();
+        if (wizardModel != null) {
+            createLanguageFromWizard(wizardModel);
+        }
+    }
+
+    private void createLanguageFromWizard(LanguageCreationWizardModel wizardModel) {
+        DictCore oldCore = core;
+        DictCore newCore = new DictCore(
+                new DesktopPropertiesManager(),
+                PolyGlot.getPolyGlot().getOSHandler(),
+                new PGTUtil(),
+                new DesktopGrammarManager()
+        );
+
+        try {
+            wizardModel.applyDefaultsTo(newCore.getPropertiesManager());
+            newCore.getRomManager().setEnabled(wizardModel.isUseRomanized());
+
+            if (!wizardModel.getCustomFontPath().isBlank()) {
+                ((DesktopPropertiesManager) newCore.getPropertiesManager())
+                        .setFontFromFile(wizardModel.getCustomFontPath());
+            }
+        } catch (IOException | FontFormatException e) {
+            new DesktopInfoBox(this).error("Language Creation Error",
+                    "Unable to create the new language:\n" + e.getLocalizedMessage());
+            return;
+        }
+
+        oldCore.migrateSubscriptions(newCore);
+        core = newCore;
+        PolyGlot.getPolyGlot().setCore(newCore);
+        PolyGlot.getPolyGlot().refreshUiDefaults();
+        updateAllChildValues(core);
+        genTitle();
+
+        if (curWindow == null) {
             saveAllValues();
             cacheLexicon.updateAllValues(core);
             changeScreen(cacheLexicon, cacheLexicon.getWindow(), null);
@@ -1342,7 +1395,7 @@ public final class ScrMainMenu extends PFrame {
         this.rootPane.add(accelSave);
 
         accelNew.addActionListener((java.awt.event.ActionEvent evt) -> {
-            this.newFile(true);
+            this.openLanguageCreationWizard(true);
         });
         this.rootPane.add(accelNew);
 
@@ -1815,7 +1868,7 @@ public final class ScrMainMenu extends PFrame {
         });
 
         btnNewLang.setText("NEW LANGUAGE");
-        btnNewLang.setToolTipText("Open blank new language file.");
+        btnNewLang.setToolTipText("Open the language creation wizard.");
         btnNewLang.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNewLangActionPerformed(evt);
@@ -2209,7 +2262,7 @@ public final class ScrMainMenu extends PFrame {
     private void mnuNewLocalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuNewLocalActionPerformed
         pnlToDoSplit.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            newFile(true);
+            openLanguageCreationWizard(true);
         } finally {
             pnlToDoSplit.setCursor(Cursor.getDefaultCursor());
         }
@@ -2492,7 +2545,7 @@ public final class ScrMainMenu extends PFrame {
     }//GEN-LAST:event_mnuIpaTranslatorActionPerformed
 
     private void btnNewLangActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewLangActionPerformed
-        newFile(true);
+        openLanguageCreationWizard(true);
     }//GEN-LAST:event_btnNewLangActionPerformed
 
     private void mnuEvolveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEvolveActionPerformed

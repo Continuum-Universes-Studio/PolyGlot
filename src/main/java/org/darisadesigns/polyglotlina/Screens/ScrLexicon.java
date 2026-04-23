@@ -20,6 +20,7 @@
 package org.darisadesigns.polyglotlina.Screens;
 
 import org.darisadesigns.polyglotlina.Nodes.ConWord;
+import org.darisadesigns.polyglotlina.LexiconDisplayRenderer;
 import org.darisadesigns.polyglotlina.Desktop.DesktopIOHandler;
 import org.darisadesigns.polyglotlina.Desktop.DesktopPropertiesManager;
 import org.darisadesigns.polyglotlina.DictCore;
@@ -34,6 +35,7 @@ import org.darisadesigns.polyglotlina.Desktop.CustomControls.PListModelLexicon;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PTextField;
 import org.darisadesigns.polyglotlina.Desktop.CustomControls.PTextPane;
 import org.darisadesigns.polyglotlina.ManagersCollections.ConWordCollection.ConWordDisplay;
+import org.darisadesigns.polyglotlina.Nodes.DisplayMode;
 import org.darisadesigns.polyglotlina.Nodes.EtyExternalParent;
 import org.darisadesigns.polyglotlina.Nodes.TypeNode;
 import org.darisadesigns.polyglotlina.Nodes.WordClassValue;
@@ -43,6 +45,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -147,6 +150,7 @@ public final class ScrLexicon extends PFrame {
     private boolean quickEntry = false;
     private Thread filterThread = null;
     private final ScrMainMenu menuParent;
+    private final PComboBox<DisplayMode> cmbLexiconDisplayMode;
     private final PTextField txtRom;
     private final DefaultTableModel linkedLanguageModel;
     private final PTable tblLinkedLanguages;
@@ -181,8 +185,9 @@ public final class ScrLexicon extends PFrame {
         defRootValue.setId(-1);
 
         fxPanel = new JFXPanel();
-        txtRom = new PTextField(core, true, "Romanization");
-        txtRom.setToolTipText("Romanized representation of word");
+        cmbLexiconDisplayMode = new PComboBox<>(((DesktopPropertiesManager) core.getPropertiesManager()).getFontMenu(), core);
+        txtRom = new PTextField(core, true, "Lexicon Display");
+        txtRom.setToolTipText("Preview of the selected lexicon display mode");
         linkedLanguageModel = new DefaultTableModel(
                 new String[]{"Target File", "Language Name", "Link Type", "Notes"}, 0) {
             @Override
@@ -424,6 +429,7 @@ public final class ScrLexicon extends PFrame {
                 populateLexicon();
                 forceUpdate = false;
                 populateProperties();
+                refreshLexiconDisplayPresentation();
                 setCustomLabels();
                 setupForm();
                 setupListeners();
@@ -517,11 +523,10 @@ public final class ScrLexicon extends PFrame {
 
             ConWord curWord = getCurrentWord();
             saveValuesTo(curWord);
-            Font conFont = ((DesktopPropertiesManager)core.getPropertiesManager()).getFontCon();
             Font localFont = ((DesktopPropertiesManager)core.getPropertiesManager()).getFontLocal();
-            lstLexicon.setFont(core.getPropertiesManager().isUseLocalWordLex() ? localFont : conFont);
             cmbType.setFont(localFont);
             tblLinkedLanguages.setFont(localFont);
+            refreshLexiconDisplayPresentation();
             setupComboBoxesSwing();
             curPopulating = localPopulating;
             forceUpdate = false;
@@ -612,24 +617,22 @@ public final class ScrLexicon extends PFrame {
     }
 
     /**
-     * Sets up the romanization field. Should be run after setupClassPanel, as it utilizes the class panel space
+     * Sets up the read-only lexicon display preview field.
      */
-    private void setupRomField() {
-        if (core.getRomManager().isEnabled()) {
-            txtRom.setEditable(false);
-            txtRom.setFocusable(false);
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.anchor = GridBagConstraints.NORTHWEST;
-            gbc.weighty = 1;
-            gbc.weightx = 1;
-            gbc.gridx = 0;
-            gbc.fill = GridBagConstraints.BOTH;
-            pnlClasses.add(txtRom, gbc);
-            pnlClasses.setFocusTraversalPolicy(new PFocusTraversalPolicy());
+    private void setupDisplayPreviewField() {
+        txtRom.setEditable(false);
+        txtRom.setFocusable(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.weighty = 1;
+        gbc.weightx = 1;
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        pnlClasses.add(txtRom, gbc);
+        pnlClasses.setFocusTraversalPolicy(new PFocusTraversalPolicy());
 
-            genRom();
-            pnlClasses.repaint();
-        }
+        refreshDisplayPreview();
+        pnlClasses.repaint();
     }
 
     /**
@@ -788,8 +791,10 @@ public final class ScrLexicon extends PFrame {
         c.gridheight = GridBagConstraints.RELATIVE;
         c.gridwidth = GridBagConstraints.RELATIVE;
 
-        jPanel1.setLayout(new GridLayout());
-        jPanel1.add(fxPanel, c);
+        jPanel1.removeAll();
+        jPanel1.setLayout(new BorderLayout(6, 6));
+        jPanel1.add(buildDisplayModeToolbar(), BorderLayout.NORTH);
+        jPanel1.add(fxPanel, BorderLayout.CENTER);
         jPanel1.setBackground(Color.white);
         fxPanel.setBackground(Color.white);
         final CountDownLatch latch = new CountDownLatch(1);
@@ -807,6 +812,36 @@ public final class ScrLexicon extends PFrame {
         }
         
         gridTitlePane.setTooltip(new Tooltip(FILTER_LABEL));
+    }
+
+    private JPanel buildDisplayModeToolbar() {
+        JPanel displayToolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        displayToolbar.setBackground(javax.swing.UIManager.getColor("Panel.background"));
+
+        PLabel lblDisplayMode = new PLabel("Lexicon Display:");
+        lblDisplayMode.setFont(((DesktopPropertiesManager) core.getPropertiesManager()).getFontMenu());
+
+        cmbLexiconDisplayMode.removeAllItems();
+        for (DisplayMode displayMode : DisplayMode.values()) {
+            cmbLexiconDisplayMode.addItem(displayMode);
+        }
+        cmbLexiconDisplayMode.setSelectedItem(core.getPropertiesManager().getLexiconDisplayMode());
+        cmbLexiconDisplayMode.addActionListener((ActionEvent evt) -> {
+            if (curPopulating) {
+                return;
+            }
+
+            Object selectedItem = cmbLexiconDisplayMode.getSelectedItem();
+            if (selectedItem instanceof DisplayMode displayMode) {
+                core.getPropertiesManager().setLexiconDisplayMode(displayMode);
+                refreshLexiconDisplayPresentation();
+            }
+        });
+
+        displayToolbar.add(lblDisplayMode);
+        displayToolbar.add(cmbLexiconDisplayMode);
+
+        return displayToolbar;
     }
 
     private Scene createScene() {
@@ -846,20 +881,38 @@ public final class ScrLexicon extends PFrame {
         curPopulating = localPopulating;
     }
 
-    /**
-     * generates
-     */
-    private void genRom() {
-        if (enableProcGen) {
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    txtRom.setText(core.getRomManager().getPronunciation(txtConWord.getText()));
-                } catch (Exception e) {
-                    // simply disable pronunciation generation for now. user informed of error elsewhere.
-                    enableProcGen = false;
-                }
-            });
+    private ConWord buildPreviewWord() {
+        if (!txtConWord.isEnabled() && txtConWord.getText().isBlank()) {
+            return null;
         }
+
+        ConWord previewWord = new ConWord();
+        previewWord.setCore(core);
+        previewWord.setValue(txtConWord.getText());
+        previewWord.setLocalWord(txtLocalWord.getText());
+        previewWord.setPronunciation(txtProc.getText());
+        previewWord.setProcOverride(chkProcOverride.isSelected());
+
+        return previewWord;
+    }
+
+    private void refreshDisplayPreview() {
+        SwingUtilities.invokeLater(() -> {
+            ConWord previewWord = buildPreviewWord();
+
+            if (previewWord == null) {
+                txtRom.setText("");
+                txtRom.setFont(((DesktopPropertiesManager) core.getPropertiesManager()).getFontLocal());
+                return;
+            }
+
+            LexiconDisplayRenderer.DisplayValue displayValue = LexiconDisplayRenderer.getDisplayValue(previewWord, core);
+            txtRom.setText(displayValue.getText());
+            txtRom.setFont(displayValue.isUseConlangFont()
+                    ? ((DesktopPropertiesManager) core.getPropertiesManager()).getFontCon()
+                    : ((DesktopPropertiesManager) core.getPropertiesManager()).getFontLocal());
+            txtRom.setToolTipText("Preview of " + core.getPropertiesManager().getLexiconDisplayMode() + " display");
+        });
     }
 
     /**
@@ -1215,25 +1268,8 @@ public final class ScrLexicon extends PFrame {
             applyIllegalFilter();
         });
         cmbRootSrc = new ComboBox<>();
-        cmbRootSrc.setCellFactory((ListView<Object> param) -> {
-            final ListCell<Object> cell = new ListCell<Object>() {
-                @Override
-                public void updateItem(Object item,
-                        boolean empty) {
-                    super.updateItem(item, empty);
-                    if (item instanceof ConWord || item instanceof ConWordDisplay) {
-                        setFont(((DesktopPropertiesManager)core.getPropertiesManager()).getFXConFont());
-                        setText(item.toString());
-                    } else if (item instanceof EtyExternalParent) {
-                        setFont(font);
-                        setText(item.toString());
-                    } else {
-                        setText(null);
-                    }
-                }
-            };
-            return cell;
-        });
+        cmbRootSrc.setButtonCell(createRootComboCell());
+        cmbRootSrc.setCellFactory((ListView<Object> param) -> createRootComboCell());
 
         grid.setVgap(4);
         grid.setPadding(new Insets(5, 5, 5, 5));
@@ -1306,6 +1342,81 @@ public final class ScrLexicon extends PFrame {
         cmbRootSrc.setStyle("-fx-font: "
                 + localFont.getSize() + "px \""
                 + localFont.getFamily() + "\";");
+        applyRootComboSelectionStyle();
+    }
+
+    private ListCell<Object> createRootComboCell() {
+        return new ListCell<>() {
+            @Override
+            public void updateItem(Object item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
+
+                if (item == defRootValue) {
+                    setFont(((DesktopPropertiesManager) core.getPropertiesManager()).getFXLocalFont());
+                    setText(defRootValue.getValue());
+                    return;
+                }
+
+                if (item instanceof ConWord word) {
+                    LexiconDisplayRenderer.DisplayValue displayValue = LexiconDisplayRenderer.getDisplayValue(word, core);
+                    setFont(displayValue.isUseConlangFont()
+                            ? ((DesktopPropertiesManager) core.getPropertiesManager()).getFXConFont()
+                            : ((DesktopPropertiesManager) core.getPropertiesManager()).getFXLocalFont());
+                    setText(displayValue.getText());
+                } else {
+                    setFont(((DesktopPropertiesManager) core.getPropertiesManager()).getFXLocalFont());
+                    setText(item.toString());
+                }
+            }
+        };
+    }
+
+    private void applyRootComboSelectionStyle() {
+        if (cmbRootSrc == null) {
+            return;
+        }
+
+        Object selectedItem = cmbRootSrc.getValue();
+        Font font;
+
+        if (selectedItem instanceof ConWord word && selectedItem != defRootValue) {
+            LexiconDisplayRenderer.DisplayValue displayValue = LexiconDisplayRenderer.getDisplayValue(word, core);
+            font = displayValue.isUseConlangFont()
+                    ? ((DesktopPropertiesManager) core.getPropertiesManager()).getFontCon()
+                    : ((DesktopPropertiesManager) core.getPropertiesManager()).getFontLocal();
+        } else {
+            font = ((DesktopPropertiesManager) core.getPropertiesManager()).getFontLocal();
+        }
+
+        cmbRootSrc.setStyle("-fx-font: " + font.getSize() + "px \"" + font.getFamily() + "\";");
+    }
+
+    private void refreshLexiconDisplayPresentation() {
+        boolean localPopulating = curPopulating;
+        curPopulating = true;
+
+        try {
+            cmbLexiconDisplayMode.setSelectedItem(core.getPropertiesManager().getLexiconDisplayMode());
+            lstLexicon.repaint();
+            refreshDisplayPreview();
+
+            wrapPlatformRunnable(() -> {
+                if (cmbRootSrc == null) {
+                    return;
+                }
+
+                cmbRootSrc.setButtonCell(createRootComboCell());
+                cmbRootSrc.setCellFactory((ListView<Object> param) -> createRootComboCell());
+                applyRootComboSelectionStyle();
+            });
+        } finally {
+            curPopulating = localPopulating;
+        }
     }
 
     /**
@@ -1385,14 +1496,14 @@ public final class ScrLexicon extends PFrame {
             @Override
             public void changedUpdate(DocumentEvent e) {
                 genProc();
-                genRom();
+                refreshDisplayPreview();
                 setWordLegality();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
                 genProc();
-                genRom();
+                refreshDisplayPreview();
                 setWordLegality();
                 if (isFilterBlank()) {
                     // if filter is in place, do not trigger a rerender of the values
@@ -1403,7 +1514,7 @@ public final class ScrLexicon extends PFrame {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 genProc();
-                genRom();
+                refreshDisplayPreview();
                 setWordLegality();
                 if (isFilterBlank()) {
                     // if filter is in place, do not trigger a rerender of the values
@@ -1466,18 +1577,26 @@ public final class ScrLexicon extends PFrame {
         txtProc.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void changedUpdate(DocumentEvent e) {
+                refreshDisplayPreview();
                 setWordLegality();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
+                refreshDisplayPreview();
                 setWordLegality();
             }
 
             @Override
             public void insertUpdate(DocumentEvent e) {
+                refreshDisplayPreview();
                 setWordLegality();
             }
+        });
+
+        chkProcOverride.addActionListener((ActionEvent e) -> {
+            refreshDisplayPreview();
+            setWordLegality();
         });
 
         lstLexicon.addMouseMotionListener(new MouseMotionListener() {
@@ -1515,19 +1634,7 @@ public final class ScrLexicon extends PFrame {
 
         // handles swapping of font for root box as appropriate
         cmbRootSrc.addEventHandler(EventType.ROOT, (Event evt) -> {
-            if (cmbRootSrc.getValue() instanceof ConWord || cmbRootSrc.getValue() instanceof ConWordDisplay) {
-                cmbRootSrc.setStyle("-fx-font: "
-                        + ((DesktopPropertiesManager)core.getPropertiesManager())
-                                .getFontCon().getSize()
-                        + "px \""
-                        + ((DesktopPropertiesManager)core.getPropertiesManager()).getFontCon()
-                                .getFamily() + "\";");
-            } else {
-                Font localFont = ((DesktopPropertiesManager)core.getPropertiesManager()).getFontLocal();
-                cmbRootSrc.setStyle("-fx-font: "
-                        + localFont.getSize() + "px \""
-                        + localFont.getFamily() + "\";");
-            }
+            applyRootComboSelectionStyle();
         });
     }
 
@@ -1582,6 +1689,7 @@ public final class ScrLexicon extends PFrame {
                 }
                 txtLocalWord.setText("");
                 txtProc.setText("");
+                txtRom.setText("");
                 txtDefinition.setText("");
                 cmbType.setSelectedIndex(0);
                 chkProcOverride.setSelected(false);
@@ -1612,8 +1720,9 @@ public final class ScrLexicon extends PFrame {
                 chkProcOverride.setSelected(curWord.isProcOverride());
                 chkRuleOverride.setSelected(curWord.isRulesOverride());
                 setupClassPanel(curWord.getWordTypeId());
-                setupRomField();
+                setupDisplayPreviewField();
                 populateClassPanel();
+                refreshDisplayPreview();
                 setPropertiesEnabled(true);
             }
         } catch (IllegalArgumentException e) {
@@ -1680,6 +1789,9 @@ public final class ScrLexicon extends PFrame {
         cmbRootSrc.getItems().add(defRootValue);
         cmbRootSrc.getSelectionModel().selectFirst();
         cmbRootSrc.getItems().addAll(Arrays.asList(core.getEtymologyManager().getAllRoots()));
+        cmbRootSrc.setButtonCell(createRootComboCell());
+        cmbRootSrc.setCellFactory((ListView<Object> param) -> createRootComboCell());
+        applyRootComboSelectionStyle();
     }
 
     /**
@@ -2506,7 +2618,7 @@ public final class ScrLexicon extends PFrame {
                 setupClassPanel(((TypeNode) typeObject).getId());
             }
 
-            setupRomField();
+            setupDisplayPreviewField();
             setWordLegality();
         }
     }//GEN-LAST:event_cmbTypeActionPerformed

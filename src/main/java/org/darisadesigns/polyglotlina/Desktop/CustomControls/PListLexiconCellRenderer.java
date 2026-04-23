@@ -26,6 +26,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
+import org.darisadesigns.polyglotlina.LexiconDisplayRenderer;
 import org.darisadesigns.polyglotlina.Desktop.DesktopPropertiesManager;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.ManagersCollections.ConWordCollection.ConWordDisplay;
@@ -51,9 +52,12 @@ public class PListLexiconCellRenderer extends DefaultListCellRenderer {
         if (curVal != null && core.getPropertiesManager().isExpandedLexListDisplay()) {
             ConWord word = curVal.getConWord();
             Font localFont = ((DesktopPropertiesManager)core.getPropertiesManager()).getFontLocal();
-            Font conFont = ((DesktopPropertiesManager)core.getPropertiesManager()).getFontCon();
+            LexiconDisplayRenderer.DisplayValue displayValue = LexiconDisplayRenderer.getDisplayValue(word, core);
+            Font lexiconFont = displayValue.isUseConlangFont()
+                    ? ((DesktopPropertiesManager)core.getPropertiesManager()).getFontCon()
+                    : localFont;
             FontMetrics localMetrics = g.getFontMetrics(localFont);
-            FontMetrics conMetrics = g.getFontMetrics(conFont);
+            FontMetrics lexiconMetrics = g.getFontMetrics(lexiconFont);
             
             int wordEnd;
             int dropPosition;
@@ -61,16 +65,16 @@ public class PListLexiconCellRenderer extends DefaultListCellRenderer {
             String printValue;
             
             if (core.getPropertiesManager().isUseLocalWordLex()) {
-                printValue = word.getValue();
+                printValue = displayValue.getText();
                 wordEnd = localMetrics.stringWidth(word.getLocalWord());
-                dropPosition = (conMetrics.getHeight() * 6) / 7;
+                dropPosition = (lexiconMetrics.getHeight() * 6) / 7;
                 height = localMetrics.getHeight();
-                g.setFont(conFont);
+                g.setFont(lexiconFont);
             } else {
                 printValue = word.getLocalWord();
-                wordEnd = conMetrics.stringWidth(word.getValue());
+                wordEnd = lexiconMetrics.stringWidth(displayValue.getText());
                 dropPosition = (localMetrics.getHeight() * 6) / 7;
-                height = conMetrics.getHeight();
+                height = lexiconMetrics.getHeight();
                 g.setFont(localFont);
             }
             
@@ -91,10 +95,27 @@ public class PListLexiconCellRenderer extends DefaultListCellRenderer {
         boolean isSelected,
         boolean cellHasFocus)
     {
+        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
         if (value instanceof ConWordDisplay _value) {
             curVal = _value;
+            ConWord word = _value.getConWord();
+            Font localFont = ((DesktopPropertiesManager)core.getPropertiesManager()).getFontLocal();
+
+            if (core.getPropertiesManager().isUseLocalWordLex()) {
+                setFont(localFont);
+                setText(word.getLocalWord().isBlank() ? " " : word.getLocalWord());
+            } else {
+                LexiconDisplayRenderer.DisplayValue displayValue = LexiconDisplayRenderer.getDisplayValue(word, core);
+                setFont(displayValue.isUseConlangFont()
+                        ? ((DesktopPropertiesManager)core.getPropertiesManager()).getFontCon()
+                        : localFont);
+                setText(displayValue.getText().isBlank() ? " " : displayValue.getText());
+            }
+        } else {
+            curVal = null;
         }
         
-        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return component;
     }
 }
