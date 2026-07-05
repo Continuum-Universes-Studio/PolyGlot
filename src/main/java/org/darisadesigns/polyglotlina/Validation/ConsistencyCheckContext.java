@@ -9,7 +9,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.darisadesigns.polyglotlina.DictCore;
 import org.darisadesigns.polyglotlina.Nodes.LinkedLanguage;
 import org.darisadesigns.polyglotlina.Nodes.LinkedWordReference;
-import org.darisadesigns.polyglotlina.Desktop.DesktopGrammarManager;
+import org.darisadesigns.polyglotlina.Desktop.ManagersCollections.DesktopGrammarManager;
 import org.darisadesigns.polyglotlina.Desktop.DesktopPropertiesManager;
 
 /**

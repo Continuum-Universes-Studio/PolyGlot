@@ -24,33 +24,113 @@
     <profiles>
         <profile>
             <id>linux</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
             <properties>
                 <javafx.platform.classifier>linux</javafx.platform.classifier>
             </properties>
         </profile>
         <profile>
             <id>linux-aarch64</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
             <properties>
                 <javafx.platform.classifier>linux-aarch64</javafx.platform.classifier>
             </properties>
         </profile>
         <profile>
             <id>windows</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
             <properties>
                 <javafx.platform.classifier>win</javafx.platform.classifier>
             </properties>
         </profile>
         <profile>
             <id>mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>x86_64</arch>
+                </os>
+            </activation>
             <properties>
                 <javafx.platform.classifier>mac</javafx.platform.classifier>
             </properties>
         </profile>
         <profile>
             <id>mac-aarch64</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
             <properties>
                 <javafx.platform.classifier>mac-aarch64</javafx.platform.classifier>
             </properties>
+        </profile>
+        <profile>
+            <id>runtime-image</id>
+            <activation>
+                <property>
+                    <name>runtimeImage</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jlink-plugin</artifactId>
+                        <version>3.2.0</version>
+                        <configuration>
+                            <sourceJdkModules>${runtime.image.jdk}</sourceJdkModules>
+                            <mainClass>org.darisadesigns.polyglotlina.Desktop.PolyGlot</mainClass>
+                            <modulePaths>
+                                <modulePath>${project.build.directory}/module_injected_jars</modulePath>
+                            </modulePaths>
+                            <modules>
+                                <module>org.darisadesigns.polyglotlina.polyglot</module>
+                                <module>org.apache.commons.csv</module>
+                                <module>commons.math3</module>
+                                <module>org.apache.commons.collections4</module>
+                                <module>com.zaxxer.sparsebitset</module>
+                                <module>jdk.crypto.ec</module>
+                                <module>javafx.base</module>
+                                <module>javafx.controls</module>
+                                <module>javafx.graphics</module>
+                                <module>javafx.media</module>
+                                <module>javafx.swing</module>
+                                <module>javafx.web</module>
+                                <module>jdk.jsobject</module>
+                            </modules>
+                            <compress>2</compress>
+                            <attach>true</attach>
+                            <classifier>runtime-image</classifier>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>create-runtime-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jlink</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
@@ -354,47 +434,6 @@
                                 </module>
                             </modules>
                         </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- jlink packaging plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jlink-plugin</artifactId>
-                <version>3.2.0</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <mainClass>org.darisadesigns.polyglotlina.Desktop.PolyGlot</mainClass>
-                    <mainModule>org.darisadesigns.polyglotlina.polyglot</mainModule>
-                    <modulePaths>
-                        <modulePath>${project.build.directory}/module_injected_jars</modulePath>
-                    </modulePaths>
-                    <modules>
-                        <module>org.darisadesigns.polyglotlina.polyglot</module>
-                        <module>org.apache.commons.csv</module>
-                        <module>commons.math3</module>
-                        <module>org.apache.commons.collections4</module>
-                        <module>com.zaxxer.sparsebitset</module>
-                        <module>jdk.crypto.ec</module>
-                        <module>javafx.base</module>
-                        <module>javafx.controls</module>
-                        <module>javafx.graphics</module>
-                        <module>javafx.media</module>
-                        <module>javafx.swing</module>
-                        <module>javafx.web</module>
-                        <module>jdk.jsobject</module>
-                    </modules>
-                    <compress>2</compress>
-                    <attach>true</attach>
-                    <classifier>runtime-image</classifier>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>create-runtime-image</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jlink</goal>
-                        </goals>
                     </execution>
                 </executions>
             </plugin>

@@ -23,7 +23,7 @@ public class PhonotacticsValidator extends AbstractConsistencyValidator {
                 continue;
             }
 
-            String[] illegalClusters = procMan.findIllegalClusters(phonotacticForm);
+            String[] illegalClusters = procMan.containsIllegalClusters(phonotacticForm);
             if (illegalClusters.length > 0) {
                 issues.add(issue(
                         ConsistencySeverity.ERROR,

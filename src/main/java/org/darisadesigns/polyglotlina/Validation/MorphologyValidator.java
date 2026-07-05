@@ -1,8 +1,10 @@
 package org.darisadesigns.polyglotlina.Validation;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.darisadesigns.polyglotlina.Nodes.LexiconProblemNode.ProblemType;
 import org.darisadesigns.polyglotlina.Nodes.MorphologyCondition;
 import org.darisadesigns.polyglotlina.Nodes.MorphologyConditionOperator;
@@ -54,22 +56,25 @@ public class MorphologyValidator extends AbstractConsistencyValidator {
                     "Give the rule a label so it is easier to audit later."));
         }
 
-        String[] targets = conjMan.getMorphologyTargets(type.getId());
-        if (targets != null && targets.length > 0
-                && rule.getTargetKey() != null
-                && rule.getTargetKey().equals(conjMan.getMorphologyTargetLabel(type.getId(), rule.getTargetKey()))
-                && !conjMan.isMorphologyBuiltInTarget(rule.getTargetKey())) {
+        String targetKey = rule.getTargetKey() == null ? "" : rule.getTargetKey();
+        boolean validTarget = conjMan.isMorphologyBuiltInTarget(targetKey)
+                || Arrays.stream(conjMan.getMorphologyTargets(type.getId()))
+                        .filter(Objects::nonNull)
+                        .map(pair -> pair.combinedId == null ? "" : pair.combinedId)
+                        .anyMatch(targetKey::equals);
+
+        if (!validTarget) {
             issues.add(issue(
                     ConsistencySeverity.ERROR,
                     "morphology.rule.invalid_target",
                     "Morphology rule points at an unknown target.",
                     type,
                     ProblemType.PoS,
-                    "Target key: " + rule.getTargetKey(),
+                    "Target key: " + targetKey,
                     "Choose a valid lemma, stem, or combined morphology target."));
         }
 
-        String orderKey = type.getId() + ":" + rule.getTargetKey() + ":" + rule.getOrder();
+        String orderKey = type.getId() + ":" + targetKey + ":" + rule.getOrder();
         if (seenOrders.containsKey(orderKey)) {
             issues.add(issue(
                     ConsistencySeverity.WARNING,

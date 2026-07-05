@@ -34,6 +34,8 @@ osxString = 'Darwin'
 winString = 'Windows'
 
 macIntelBuild = False
+RUNTIME_IMAGE_ENABLED = False
+RUNTIME_IMAGE_JDK = ''
 
 # OSX BUILD CONSTANTS
 SIGN_IDENTITY = ''  # set in main for timing reasons
@@ -65,6 +67,8 @@ def main() -> int:
     global failFile
     global copyDestination
     global macIntelBuild
+    global RUNTIME_IMAGE_ENABLED
+    global RUNTIME_IMAGE_JDK
 
     parser = argparse.ArgumentParser(prog='PolyGlot Build Script',
         description = ('Handles builds of PolyGlot on all supported platforms. Examples:\n'
@@ -134,6 +138,12 @@ def main() -> int:
         print('JAVA_HOME must be set. If necessary, use -java-home-o command to override')
         return 1
 
+    RUNTIME_IMAGE_ENABLED = has_jmods(JAVA_HOME)
+    if RUNTIME_IMAGE_ENABLED:
+        RUNTIME_IMAGE_JDK = JAVA_HOME
+    else:
+        print(f'JAVA_HOME at {JAVA_HOME} does not contain a jmods directory; runtime-image packaging will be unavailable.')
+
     POLYGLOT_VERSION = getVersion()
     POLYGLOT_BUILD = getBuildNum(args.release)
     print('Building Version: ' + POLYGLOT_VERSION)
@@ -157,6 +167,10 @@ def main() -> int:
     if full_build or 'build' in args.step:
         build(profile, args.skipTests)
     if full_build or 'dist' in args.step:
+        if not RUNTIME_IMAGE_ENABLED:
+            print('A full JDK with jmods is required to build the runtime image and installer.')
+            print('Point JAVA_HOME at a JDK installation that includes jmods, then rerun this script.')
+            return 1
         dist(args.release, args.type_o)
 
     print('Done!')
@@ -169,12 +183,21 @@ def build(profile : str, skipTests : bool):
     print('cleaning/testing/compiling...')
     command = f'mvn clean package -P {profile}'
 
+    if RUNTIME_IMAGE_ENABLED:
+        command += f' -DruntimeImage -Druntime.image.jdk={RUNTIME_IMAGE_JDK}'
+
     if skipTests:
-        command += ' -DskipTests'
+        command += ' -Dmaven.test.skip=true'
     stat = subprocess.run(command, shell=True)
     if stat.returncode != 0:
         print(stat.args)
         sys.exit(1)
+
+def has_jmods(java_home: str) -> bool:
+    if java_home is None or java_home == '':
+        return False
+
+    return path.isdir(path.join(java_home, 'jmods'))
 
 def clean():
     print('cleaning build paths...')
